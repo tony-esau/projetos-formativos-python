@@ -3,8 +3,9 @@ import os
 from pathlib import Path
 import json
 from collections import defaultdict
+import shutil
 
-#python organizador.py [-h] [-s] [caminho]
+# python organizador.py [-h] [-s] [caminho]
 
 TEXTO_SOBRE = """---------------- O que esse programa faz? -------------------
 
@@ -141,6 +142,22 @@ def imprimir_simulacao(impressao):
     total = sum(len(arquivos) for arquivos in impressao.values())
     print(f"\nTotal: {total} arquivo(s) em {len(pastas)} pasta(s) distintas.")
 
+
+def nome_livre(destino):
+    """Devolve um caminho que ainda não existe, numerando se preciso.
+
+    Exemplo: se foto.jpg já existe, tenta foto (1).jpg, foto (2).jpg...
+    """
+    if not destino.exists():
+        return destino
+
+    numero = 1
+    while True:
+        candidato = destino.with_name(f"{destino.stem} ({numero}){destino.suffix}")
+        if not candidato.exists():
+            return candidato
+        numero += 1
+
 def organizar(caminho, simulacao):
 	"""
 		Lê o arquivo de regras .json e decide:
@@ -171,7 +188,24 @@ def organizar(caminho, simulacao):
 
 		imprimir_simulacao(impressao)
 	else:
-		print("já já")
+	    for arquivo in arquivos:
+	        associou = False
+	        for chave in regras.keys():
+	            # .suffix devolve uma string após o último ponto.
+	            if arquivo.suffix.lower() in regras[chave]:
+	                subpasta = caminho / chave
+	                subpasta.mkdir(exist_ok=True)
+	                destino = nome_livre(subpasta / arquivo.name)
+	                shutil.move(arquivo, destino)
+	                associou = True
+	                break
+
+	        if not associou:
+	            subpasta = caminho / "Outros"
+	            subpasta.mkdir(exist_ok=True)
+	            destino = nome_livre(subpasta / arquivo.name)
+	            shutil.move(arquivo, destino)
+	    
 
 def organizador():
 	"""Fluxo principal do programa: organizador dos arquivos."""
