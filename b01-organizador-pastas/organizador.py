@@ -4,6 +4,7 @@ from pathlib import Path
 import json
 from collections import defaultdict
 import shutil
+from datetime import datetime
 
 # python organizador.py [-h] [-s] [caminho]
 
@@ -54,38 +55,39 @@ def limpar_tela(esperar=True):
     """Limpa o terminal."""
 
     if esperar:
-    	print()	
-    	input('Enter para continuar...')
+        print()
+        input('Enter para continuar...')
     os.system("cls" if os.name == "nt" else "clear")
 
 def ler_caminho():
-	""" Função para o caso em que o usuário não repassou o caminho.
-		Retorno: caminho da pasta.
-	"""
+    """ Função para o caso em que o usuário não repassou o caminho.
+        Retorno: caminho da pasta.
+    """
 
-	while(True):
-		caminho = input(
-			"Digite o caminho (ou só Enter para a pasta atual): ")
-		caminho = Path(caminho)
-		if(caminho.is_dir()):
-			limpar_tela(esperar=False)
-			print(f"A pasta selecionada foi: {Path.cwd().name}")
-			limpar_tela()
-			break
-		else:
-			print("Pasta não encontrada!")
-			print("Digite 'q' para sair do programa ou pressione Enter "
-				  "para tentar novamente.")
-			opcao = input()
-			if(opcao == 'q'):
-				limpar_tela(esperar=False)
-				sys.exit(0)
-			else: 
-				continue
-	return caminho
+    while(True):
+        caminho = input(
+            "Digite o caminho (ou só Enter para a pasta atual): ")
+        caminho = Path(caminho)
+        if(caminho.is_dir()):
+            limpar_tela(esperar=False)
+            print(f"A pasta selecionada foi: {Path.cwd().name}")
+            limpar_tela()
+            break
+        else:
+            print("Pasta não encontrada!")
+            print("Digite 'q' para sair do programa ou pressione Enter "
+                  "para tentar novamente.")
+            opcao = input()
+            if(opcao == 'q'):
+                limpar_tela(esperar=False)
+                sys.exit(0)
+            else:
+                continue
+    return caminho
 
 def modo_ajuda():
     """Mostra um menu de terminal para tirar dúvidas de uso."""
+
     limpar_tela(esperar=False)
     print("-" * 11 + " Menu de ajuda! " + "-" * 11)
 
@@ -108,20 +110,20 @@ def modo_ajuda():
             return
 
         elif opcao == "q":
-       		limpar_tela(esperar=False)
-       		sys.exit(0)
+            limpar_tela(esperar=False)
+            sys.exit(0)
 
         else:
             print("Escolha inválida!")
             limpar_tela()
 
 def ler_argumentos():
-	""" Lê os argumentos do terminal com sys.argv.
-		Retorno: argumentos lidos.
-	"""
-	argumentos = sys.argv[1:]
+    """ Lê os argumentos do terminal com sys.argv.
+        Retorno: argumentos lidos.
+    """
+    argumentos = sys.argv[1:]
 
-	return argumentos
+    return argumentos
 
 def imprimir_simulacao(impressao):
     """Mostra em formato de árvore como a pasta ficaria após organizar."""
@@ -158,127 +160,165 @@ def nome_livre(destino):
             return candidato
         numero += 1
 
+def salvar_historico(caminho, movimentos):
+    """Grava os movimentos feitos, para poder desfazer depois."""
+
+    historico = {
+        "data": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "pasta": str(pasta.resolve()),
+        "movimentos": movimentos,
+    }
+
+    """
+        - Diretório do arquivo python '__file__', menos o nome do arquivo 
+        (.parent);
+        - Path.cwd() não funcionaria nesse caso, pois muda conforme a pasta que
+        o arquivo .py é chamado.
+    """
+    arquivo_historico = Path(__file__).parent / "historico.json"
+    texto = json.dumps(historico, ensure_ascii=False, indent=2)
+    arquivo_historico.write_text(texto, encoding="utf-8")
+
 def organizar(caminho, simulacao):
-	"""
-		Lê o arquivo de regras .json e decide:
-			- Se simulacao = False, reorganiza o pasta do caminho.
-			- Senão apenas constrói uma simulação que será impressa.
-	"""
+    """
+        Lê o arquivo de regras .json e decide:
+            - Se simulacao = False, reorganiza o pasta do caminho.
+            - Senão apenas constrói uma simulação que será impressa.
+    """
 
-	caminho = Path(caminho) 
+    caminho = Path(caminho)
 
-	texto = Path("regras.json").read_text(encoding="utf-8") # Lido como string.
-	regras = json.loads(texto) #.loads() recebe uma string.
-	
-	arquivos = [item for item in caminho.iterdir() if item.is_file()]
+    texto = Path("regras.json").read_text(encoding="utf-8") # Lido como string.
+    regras = json.loads(texto) #.loads() recebe uma string.
 
-	if (simulacao):
-		# Todo append já começa com uma coleção vazia.
-		impressao = defaultdict(list)
-		for arquivo in arquivos:
-			associou = False 
-			for chave in regras.keys():
-				# .suffix devolve uma string após o último ponto.
-				if(arquivo.suffix.lower() in regras[chave]):
-					impressao[chave].append(arquivo.name)
-					associou = True
-					break
-			if (associou == False):
-				impressao['outros'].append(arquivo.name)
+    arquivos = [item for item in caminho.iterdir() if item.is_file()]
 
-		imprimir_simulacao(impressao)
-	else:
-	    for arquivo in arquivos:
-	        associou = False
-	        for chave in regras.keys():
-	            # .suffix devolve uma string após o último ponto.
-	            if arquivo.suffix.lower() in regras[chave]:
-	                subpasta = caminho / chave
-	                subpasta.mkdir(exist_ok=True)
-	                destino = nome_livre(subpasta / arquivo.name)
-	                shutil.move(arquivo, destino)
-	                associou = True
-	                break
+    if (simulacao):
+        # Todo append já começa com uma coleção vazia.
+        impressao = defaultdict(list)
+        for arquivo in arquivos:
+            associou = False
+            for chave in regras.keys():
+                # .suffix devolve uma string após o último ponto.
+                if(arquivo.suffix.lower() in regras[chave]):
+                    impressao[chave].append(arquivo.name)
+                    associou = True
+                    break
+            if (associou == False):
+                impressao['outros'].append(arquivo.name)
 
-	        if not associou:
-	            subpasta = caminho / "Outros"
-	            subpasta.mkdir(exist_ok=True)
-	            destino = nome_livre(subpasta / arquivo.name)
-	            shutil.move(arquivo, destino)
-	    
+        imprimir_simulacao(impressao)
+    else:
+        movimentos = []
+
+        try:
+            for arquivo in arquivos:
+                associou = False
+                for chave in regras.keys():
+                    # .suffix devolve uma string após o último ponto.
+                    if arquivo.suffix.lower() in regras[chave]:
+                        subpasta = caminho / chave
+                        subpasta.mkdir(exist_ok=True)
+                        destino = nome_livre(subpasta / arquivo.name)
+                        shutil.move(arquivo, destino)
+
+                        """
+                            Guardando os movimentos caso usuário queira voltar
+                            ao estado inicial.
+                        """
+                        movimentos.append({
+                            "origem": str(arquivo.resolve()),
+                            "destino": str(destino.resolve()),
+                        })
+                        associou = True
+                        break
+
+                if not associou:
+                    subpasta = caminho / "Outros"
+                    subpasta.mkdir(exist_ok=True)
+                    destino = nome_livre(subpasta / arquivo.name)
+                    shutil.move(arquivo, destino)
+                    movimentos.append({
+                        "origem": str(arquivo.resolve()),
+                        "destino": str(destino.resolve()),
+                    })
+
+        finally:
+            salvar_historico(caminho, movimentos)
+            print(f"{len(movimentos)} arquivo(s) movido(s).")
 
 def organizador():
-	"""Fluxo principal do programa: organizador dos arquivos."""
+    """Fluxo principal do programa: organizador dos arquivos."""
 
-	argumentos = ler_argumentos()
-	if '-h' in argumentos or '-help' in argumentos:
-		modo_ajuda()
+    argumentos = ler_argumentos()
+    if '-h' in argumentos or '-help' in argumentos:
+        modo_ajuda()
 
-	simulacao = False
-	if '-s' in argumentos:
-		simulacao = True 
+    simulacao = False
+    if '-s' in argumentos:
+        simulacao = True
 
-	candidatos_caminho = [  
-		valor for valor in argumentos if not valor.startswith("-") 
-		and Path(valor).is_dir()
-	]
+    candidatos_caminho = [
+        valor for valor in argumentos if not valor.startswith("-")
+        and Path(valor).is_dir()
+    ]
 
-	if(candidatos_caminho):
-		if(len(candidatos_caminho) > 1):
-			print("Foram informados mais de um caminho válido:")
-			numeros = []
-			while(True):
-				for i, caminho in enumerate(candidatos_caminho, start=1):
-					print(f'Caminho {i}: {caminho}')
-					numeros.append(str(i))
+    if(candidatos_caminho):
+        if(len(candidatos_caminho) > 1):
+            print("Foram informados mais de um caminho válido:")
+            numeros = []
+            while(True):
+                for i, caminho in enumerate(candidatos_caminho, start=1):
+                    print(f'Caminho {i}: {caminho}')
+                    numeros.append(str(i))
 
-				print()
-				print("O que você deseja fazer?")
-				print("  1: Usar um desses caminhos;")
-				print("  2: Informar um novo caminho;")
-				print("  q: Sair do programa.")
-				opcao = input("Opção: ")
+                print()
+                print("O que você deseja fazer?")
+                print("  1: Usar um desses caminhos;")
+                print("  2: Informar um novo caminho;")
+                print("  q: Sair do programa.")
+                opcao = input("Opção: ")
 
-				if (opcao == '1'):
-					numero = input('Digite o número do caminho: ')
-					if (numero in numeros):
-						organizar(candidatos_caminho[int(numero)-1], simulacao)
-						limpar_tela()
-						break
+                if (opcao == '1'):
+                    numero = input('Digite o número do caminho: ')
+                    if (numero in numeros):
+                        organizar(candidatos_caminho[int(numero)-1], simulacao)
+                        limpar_tela()
+                        break
 
-				elif (opcao == '2'):
-					caminho = ler_caminho()
-					limpar_tela(esperar=False)
-					organizar(caminho, simulacao)
-					break
+                elif (opcao == '2'):
+                    caminho = ler_caminho()
+                    limpar_tela(esperar=False)
+                    organizar(caminho, simulacao)
+                    break
 
-				elif (opcao == 'q'):
-					limpar_tela(esperar=False)
-					sys.exit(0)
+                elif (opcao == 'q'):
+                    limpar_tela(esperar=False)
+                    sys.exit(0)
 
-				print("Opção inválida! Tente novamente...")
-				limpar_tela()
-		else:
-			organizar(candidatos_caminho[0],simulacao)
+                print("Opção inválida! Tente novamente...")
+                limpar_tela()
+        else:
+            organizar(candidatos_caminho[0],simulacao)
 
-	else:
-		while(True):
-			opcao = input(
-				"Deseja informar a pasta (s) ou sair do programa (q)? ")
-			if (opcao == 'q'):
-				limpar_tela(esperar=False)
-				sys.exit(0)
-			elif (opcao == 's'):
-				limpar_tela(esperar=False)
-				caminho = ler_caminho()
-				organizar(caminho, simulacao)
-				break
-		
-		print("Opção inválida! Tente novamente...")
-		limpar_tela()
+    else:
+        while(True):
+            opcao = input(
+                "Deseja informar a pasta (s) ou sair do programa (q)? ")
+            if (opcao == 'q'):
+                limpar_tela(esperar=False)
+                sys.exit(0)
+            elif (opcao == 's'):
+                limpar_tela(esperar=False)
+                caminho = ler_caminho()
+                organizar(caminho, simulacao)
+                break
+
+        print("Opção inválida! Tente novamente...")
+        limpar_tela()
 
 def main():
-	organizador()
+    organizador()
 
 if __name__ == "__main__":
     main()
