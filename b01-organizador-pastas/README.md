@@ -18,5 +18,5 @@ Organiza uma pasta movendo cada arquivo para uma subpasta conforme a extensão.
 - Implementar a opção `--simular`, que só imprime origem -> destino e não move nada;
 - Ao final, imprimir um resumo com quantos arquivos foram para cada subpasta;
 - Escrever gerar_exemplo.py, que cria uma pasta exemplo/ com uns 30 arquivos vazios de tipos variados;
-- Registrar cada movimento em `historico.json` e criar a opção --desfazer, que devolve os arquivos movidos na última execução para o lugar original.
+- Registrar cada movimento em `historico.json` e criar a opção desfazer, que devolve os arquivos movidos na última execução para o lugar original.
 
