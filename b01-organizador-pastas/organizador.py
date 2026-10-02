@@ -6,7 +6,15 @@ from collections import defaultdict
 import shutil
 from datetime import datetime
 
-# python organizador.py [-h] [-s] [caminho]
+# python organizador.py [-h] [-s] [CAMINHO]
+
+PASTA_DO_SCRIPT = Path(__file__).parent
+ARQUIVO_REGRAS = PASTA_DO_SCRIPT / "regras.json"
+ARQUIVO_HISTORICO = PASTA_DO_SCRIPT / "historico.json"
+PASTA_OUTROS = "Outros"
+
+OPCOES_AJUDA = {"-h", "--help", "-help"}
+OPCOES_SIMULAR = {"-s", "--simular"}
 
 TEXTO_SOBRE = """---------------- O que esse programa faz? -------------------
 
@@ -33,23 +41,17 @@ CAMINHO
   informado, o programa pergunta. Use aspas se o
   caminho tiver espaços.
 
--s
+-s, --simular
   Mostra o que seria feito (origem -> destino),
   sem mover nenhum arquivo.
 
--h, -help
-  Abre este modo de ajuda.
+-h, --help
+  Mostra esta ajuda.
 
 Exemplos:
   python organizador.py C:\\Users\\joao\\Downloads
   python organizador.py exemplo -s
   python organizador.py "C:\\Minha Pasta" --simular"""
-
-MENU_AJUDA = """------ O que você deseja saber? ------
--h: O que esse programa faz?..........
--a: Argumentos desse programa.........
--v: Voltar e testar o programa........
--q: Sair do programa.................."""
 
 def limpar_tela(esperar=True):
     """Limpa o terminal."""
@@ -59,81 +61,139 @@ def limpar_tela(esperar=True):
         input('Enter para continuar...')
     os.system("cls" if os.name == "nt" else "clear")
 
+
+def encerrar_com_erro(mensagem):
+    """Mostra uma mensagem de erro e encerra com código 1."""
+
+    print(f"Erro: {mensagem}")
+    print("Use -h para ver a ajuda.")
+    sys.exit(1)
+
+
+def limpar_texto_caminho(texto):
+    """Remove espaços e aspas das pontas (ex.: "Copiar como caminho")."""
+
+    return texto.strip().strip('"')
+
+def separar_argumentos(argumentos):
+    """Separa o que é opção (começa com '-') do que é caminho.
+
+    Retorno: (conjunto de opções, lista de caminhos em texto).
+    """
+
+    opcoes = {a for a in argumentos if a.startswith("-")}
+    caminhos = [limpar_texto_caminho(a) for a in argumentos
+                if not a.startswith("-")]
+
+    desconhecidas = opcoes - OPCOES_AJUDA - OPCOES_SIMULAR
+    if desconhecidas:
+        encerrar_com_erro(
+            f"opção desconhecida: {', '.join(sorted(desconhecidas))}")
+
+    return opcoes, caminhos
+
+
+def mostrar_ajuda():
+    """Imprime a ajuda completa."""
+
+    print(TEXTO_SOBRE)
+    print()
+    print(TEXTO_ARGUMENTOS)
+
+
 def ler_caminho():
     """ Função para o caso em que o usuário não repassou o caminho.
         Retorno: caminho da pasta.
     """
 
-    while(True):
+    while True:
         caminho = input(
             "Digite o caminho (ou só Enter para a pasta atual): ")
-        caminho = Path(caminho)
-        if(caminho.is_dir()):
-            limpar_tela(esperar=False)
-            print(f"A pasta selecionada foi: {Path.cwd().name}")
-            limpar_tela()
-            break
-        else:
-            print("Pasta não encontrada!")
-            print("Digite 'q' para sair do programa ou pressione Enter "
-                  "para tentar novamente.")
-            opcao = input()
-            if(opcao == 'q'):
-                limpar_tela(esperar=False)
-                sys.exit(0)
-            else:
-                continue
-    return caminho
+        caminho = Path(limpar_texto_caminho(caminho))
 
-def modo_ajuda():
-    """Mostra um menu de terminal para tirar dúvidas de uso."""
+        if caminho.is_dir():
+            return caminho.resolve()
 
-    limpar_tela(esperar=False)
-    print("-" * 11 + " Menu de ajuda! " + "-" * 11)
-
-    while True:
-        print(MENU_AJUDA)
-        opcao = input("Opção: ").strip().lower()
-
-        if opcao == "h":
-            limpar_tela(esperar=False)
-            print(TEXTO_SOBRE)
-            limpar_tela()
-
-        elif opcao == "a":
-            limpar_tela(esperar=False)
-            print(TEXTO_ARGUMENTOS)
-            limpar_tela()
-
-        elif opcao == "v":
-            limpar_tela(esperar=False)
-            return
-
-        elif opcao == "q":
-            limpar_tela(esperar=False)
+        print("Pasta não encontrada!")
+        print("Digite 'q' para sair do programa ou pressione Enter "
+              "para tentar novamente.")
+        if input().strip().lower() == 'q':
             sys.exit(0)
 
-        else:
-            print("Escolha inválida!")
-            limpar_tela()
 
-def ler_argumentos():
-    """ Lê os argumentos do terminal com sys.argv.
-        Retorno: argumentos lidos.
+def obter_pasta(caminhos):
+    """Decide qual pasta será organizada.
+
+    - Nenhum caminho: pergunta ao usuário.
+    - Mais de um: erro (provavelmente faltaram aspas).
+    - Um: usa, se for uma pasta válida.
+    Retorno: Path absoluto de uma pasta que existe.
     """
-    argumentos = sys.argv[1:]
 
-    return argumentos
+    if not caminhos:
+        return ler_caminho()
 
-def imprimir_simulacao(impressao):
+    if len(caminhos) > 1:
+        encerrar_com_erro(
+            f"foram informados {len(caminhos)} caminhos. "
+            "Se o caminho tem espaços, coloque-o entre aspas.")
+
+    pasta = Path(caminhos[0])
+    if not pasta.is_dir():
+        encerrar_com_erro(f"a pasta '{caminhos[0]}' não existe.")
+
+    return pasta.resolve()
+                                                       regras e plano
+
+def carregar_regras():
+    """Lê o regras.json que fica na pasta do script."""
+
+    try:
+        texto = ARQUIVO_REGRAS.read_text(encoding="utf-8")
+        return json.loads(texto)
+    except FileNotFoundError:
+        encerrar_com_erro(f"arquivo de regras não encontrado: {ARQUIVO_REGRAS}")
+    except json.JSONDecodeError as erro:
+        encerrar_com_erro(f"regras.json com formato inválido ({erro}).")
+
+
+def montar_plano(pasta, regras):
+    """Decide, sem mover nada, para qual subpasta vai cada arquivo.
+
+    Retorno: lista de pares (arquivo, nome_da_subpasta).
+    """
+
+    arquivos = [item for item in pasta.iterdir() if item.is_file()]
+    plano = []
+
+    for arquivo in arquivos:
+        associou = False
+        for chave in regras.keys():
+            # .suffix devolve uma string após o último ponto.
+            if arquivo.suffix.lower() in regras[chave]:
+                plano.append((arquivo, chave))
+                associou = True
+                break
+        if not associou:
+            plano.append((arquivo, PASTA_OUTROS))
+
+    return plano
+
+def imprimir_simulacao(pasta, plano):
     """Mostra em formato de árvore como a pasta ficaria após organizar."""
 
-    print(f"{Path.cwd()}/") # Pasta atual.
+    # Todo append já começa com uma coleção vazia.
+    impressao = defaultdict(list)
+    for arquivo, subpasta in plano:
+        impressao[subpasta].append(arquivo.name)
+
+    print("[SIMULAÇÃO] Nenhum arquivo será movido.\n")
+    print(f"{pasta}/")
 
     pastas = list(impressao.items())
-    for i, (pasta, arquivos) in enumerate(pastas):
+    for i, (nome_pasta, arquivos) in enumerate(pastas):
         ultima_pasta = i == len(pastas) - 1
-        print(("└── " if ultima_pasta else "├── ") + f"{pasta}/")
+        print(("└── " if ultima_pasta else "├── ") + f"{nome_pasta}/")
 
         recuo = "    " if ultima_pasta else "│   "
         for j, arquivo in enumerate(arquivos):
@@ -141,9 +201,8 @@ def imprimir_simulacao(impressao):
             ponta = "└── " if ultimo_arquivo else "├── "
             print(recuo + ponta + arquivo)
 
-    total = sum(len(arquivos) for arquivos in impressao.values())
-    print(f"\nTotal: {total} arquivo(s) em {len(pastas)} pasta(s) distintas.")
-
+    print(f"\nTotal: {len(plano)} arquivo(s) em "
+          f"{len(pastas)} pasta(s) distintas.")
 
 def nome_livre(destino):
     """Devolve um caminho que ainda não existe, numerando se preciso.
@@ -155,170 +214,71 @@ def nome_livre(destino):
 
     numero = 1
     while True:
-        candidato = destino.with_name(f"{destino.stem} ({numero}){destino.suffix}")
+        candidato = destino.with_name(
+            f"{destino.stem} ({numero}){destino.suffix}"
+        )
         if not candidato.exists():
             return candidato
         numero += 1
 
-def salvar_historico(caminho, movimentos):
+def salvar_historico(pasta, movimentos):
     """Grava os movimentos feitos, para poder desfazer depois."""
 
     historico = {
         "data": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "pasta": str(pasta.resolve()),
+        "pasta": str(pasta),
         "movimentos": movimentos,
     }
 
-    """
-        - Diretório do arquivo python '__file__', menos o nome do arquivo 
-        (.parent);
-        - Path.cwd() não funcionaria nesse caso, pois muda conforme a pasta que
-        o arquivo .py é chamado.
-    """
-    arquivo_historico = Path(__file__).parent / "historico.json"
+    # Fica na pasta do script (Path(__file__).parent): Path.cwd() mudaria
+    # conforme a pasta de onde o programa é chamado no terminal.
     texto = json.dumps(historico, ensure_ascii=False, indent=2)
-    arquivo_historico.write_text(texto, encoding="utf-8")
+    ARQUIVO_HISTORICO.write_text(texto, encoding="utf-8")
 
-def organizar(caminho, simulacao):
+def executar_plano(pasta, plano):
+    """Move os arquivos conforme o plano e grava o histórico.
+
+    O histórico é salvo mesmo se der erro no meio (finally).
     """
-        Lê o arquivo de regras .json e decide:
-            - Se simulacao = False, reorganiza o pasta do caminho.
-            - Senão apenas constrói uma simulação que será impressa.
-    """
 
-    caminho = Path(caminho)
+    movimentos = []
+    try:
+        for arquivo, nome_subpasta in plano:
+            subpasta = pasta / nome_subpasta
+            subpasta.mkdir(exist_ok=True)
+            destino = nome_livre(subpasta / arquivo.name)
+            shutil.move(arquivo, destino)
 
-    texto = Path("regras.json").read_text(encoding="utf-8") # Lido como string.
-    regras = json.loads(texto) #.loads() recebe uma string.
-
-    arquivos = [item for item in caminho.iterdir() if item.is_file()]
-
-    if (simulacao):
-        # Todo append já começa com uma coleção vazia.
-        impressao = defaultdict(list)
-        for arquivo in arquivos:
-            associou = False
-            for chave in regras.keys():
-                # .suffix devolve uma string após o último ponto.
-                if(arquivo.suffix.lower() in regras[chave]):
-                    impressao[chave].append(arquivo.name)
-                    associou = True
-                    break
-            if (associou == False):
-                impressao['outros'].append(arquivo.name)
-
-        imprimir_simulacao(impressao)
-    else:
-        movimentos = []
-
-        try:
-            for arquivo in arquivos:
-                associou = False
-                for chave in regras.keys():
-                    # .suffix devolve uma string após o último ponto.
-                    if arquivo.suffix.lower() in regras[chave]:
-                        subpasta = caminho / chave
-                        subpasta.mkdir(exist_ok=True)
-                        destino = nome_livre(subpasta / arquivo.name)
-                        shutil.move(arquivo, destino)
-
-                        """
-                            Guardando os movimentos caso usuário queira voltar
-                            ao estado inicial.
-                        """
-                        movimentos.append({
-                            "origem": str(arquivo.resolve()),
-                            "destino": str(destino.resolve()),
-                        })
-                        associou = True
-                        break
-
-                if not associou:
-                    subpasta = caminho / "Outros"
-                    subpasta.mkdir(exist_ok=True)
-                    destino = nome_livre(subpasta / arquivo.name)
-                    shutil.move(arquivo, destino)
-                    movimentos.append({
-                        "origem": str(arquivo.resolve()),
-                        "destino": str(destino.resolve()),
-                    })
-
-        finally:
-            salvar_historico(caminho, movimentos)
-            print(f"{len(movimentos)} arquivo(s) movido(s).")
-
-def organizador():
-    """Fluxo principal do programa: organizador dos arquivos."""
-
-    argumentos = ler_argumentos()
-    if '-h' in argumentos or '-help' in argumentos:
-        modo_ajuda()
-
-    simulacao = False
-    if '-s' in argumentos:
-        simulacao = True
-
-    candidatos_caminho = [
-        valor for valor in argumentos if not valor.startswith("-")
-        and Path(valor).is_dir()
-    ]
-
-    if(candidatos_caminho):
-        if(len(candidatos_caminho) > 1):
-            print("Foram informados mais de um caminho válido:")
-            numeros = []
-            while(True):
-                for i, caminho in enumerate(candidatos_caminho, start=1):
-                    print(f'Caminho {i}: {caminho}')
-                    numeros.append(str(i))
-
-                print()
-                print("O que você deseja fazer?")
-                print("  1: Usar um desses caminhos;")
-                print("  2: Informar um novo caminho;")
-                print("  q: Sair do programa.")
-                opcao = input("Opção: ")
-
-                if (opcao == '1'):
-                    numero = input('Digite o número do caminho: ')
-                    if (numero in numeros):
-                        organizar(candidatos_caminho[int(numero)-1], simulacao)
-                        limpar_tela()
-                        break
-
-                elif (opcao == '2'):
-                    caminho = ler_caminho()
-                    limpar_tela(esperar=False)
-                    organizar(caminho, simulacao)
-                    break
-
-                elif (opcao == 'q'):
-                    limpar_tela(esperar=False)
-                    sys.exit(0)
-
-                print("Opção inválida! Tente novamente...")
-                limpar_tela()
-        else:
-            organizar(candidatos_caminho[0],simulacao)
-
-    else:
-        while(True):
-            opcao = input(
-                "Deseja informar a pasta (s) ou sair do programa (q)? ")
-            if (opcao == 'q'):
-                limpar_tela(esperar=False)
-                sys.exit(0)
-            elif (opcao == 's'):
-                limpar_tela(esperar=False)
-                caminho = ler_caminho()
-                organizar(caminho, simulacao)
-                break
-
-        print("Opção inválida! Tente novamente...")
-        limpar_tela()
+            # Guardando os movimentos caso o usuário queira voltar
+            # ao estado inicial.
+            movimentos.append({
+                "origem": str(arquivo),
+                "destino": str(destino),
+            })
+    finally:
+        salvar_historico(pasta, movimentos)
+        print(f"{len(movimentos)} de {len(plano)} arquivo(s) movido(s).")
 
 def main():
-    organizador()
+    opcoes, caminhos = separar_argumentos(sys.argv[1:])
+
+    if opcoes & OPCOES_AJUDA:
+        mostrar_ajuda()
+        return
+
+    pasta = obter_pasta(caminhos)
+    regras = carregar_regras()
+    plano = montar_plano(pasta, regras)
+
+    if not plano:
+        print(f"Nenhum arquivo para organizar em {pasta}.")
+        return
+
+    if opcoes & OPCOES_SIMULAR:
+        imprimir_simulacao(pasta, plano)
+    else:
+        executar_plano(pasta, plano)
+
 
 if __name__ == "__main__":
     main()
