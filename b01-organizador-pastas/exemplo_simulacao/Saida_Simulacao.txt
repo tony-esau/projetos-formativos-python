@@ -1,0 +1,47 @@
+\b01-organizador-pastas\exemplo/
+├── Codigo/
+│   ├── analise.ipynb
+│   ├── consulta.sql
+│   └── pagina.html
+├── Documentos/
+│   ├── anotacoes.txt
+│   ├── artigo_ic.tex
+│   ├── contrato.docx
+│   ├── curriculo.pdf
+│   ├── relatório final.pdf
+│   └── resumo.md
+├── Programas/
+│   ├── app.msi
+│   └── instalador.exe
+├── Outros/
+│   ├── arquivo_estranho.xyz
+│   ├── dados.bin
+│   ├── LEIA-ME
+│   └── script.py
+├── Apresentacoes/
+│   ├── aula_grafos.odp
+│   └── seminario.pptx
+├── Videos/
+│   ├── aula_gravada.mp4
+│   └── trailer.mkv
+├── Compactados/
+│   ├── backup.zip
+│   ├── fotos_antigas.rar
+│   └── projeto.tar.gz
+├── Planilhas/
+│   ├── dados_enem.csv
+│   ├── gastos_outubro.xlsx
+│   └── notas.ods
+├── Imagens/
+│   ├── FOTO_FESTA.JPG
+│   ├── foto_praia.jpg
+│   ├── icone.svg
+│   ├── logo.png
+│   ├── meme.gif
+│   └── wallpaper.webp
+└── Audios/
+    ├── musica.flac
+    ├── música favorita.mp3
+    └── podcast.mp3
+
+Total: 34 arquivo(s) em 10 pasta(s) distintas.
