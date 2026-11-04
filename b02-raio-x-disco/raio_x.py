@@ -10,6 +10,7 @@ from utils import barra_proporcional, formatar_bytes
 OPCOES_AJUDA = {"-h", "--help", "-help"}
 TOP = 10  # quantos itens aparecem em cada ranking
 RAIZ = "(arquivos na raiz)"  # chave dos arquivos soltos na pasta analisada
+SEM_EXTENSAO = "(sem extensão)"  # chave dos arquivos sem extensão
 
 TEXTO_AJUDA = """------------------- Raio-X do disco -------------------
 
@@ -122,6 +123,7 @@ def varrer(pasta):
         "ignorados": 0,       # itens que não puderam ser lidos
         # Toda chave nova começa em 0, então dá para somar direto.
         "por_subpasta": defaultdict(int),
+        "por_extensao": defaultdict(int),
     }
 
     # .rglob("*") percorre recursivamente todos os arquivos e pastas.
@@ -139,6 +141,11 @@ def varrer(pasta):
                 partes = item.relative_to(pasta).parts
                 subpasta = partes[0] if len(partes) > 1 else RAIZ
                 dados["por_subpasta"][subpasta] += tamanho
+
+                # Extensão em minúsculas; string vazia conta como falsa,
+                # então arquivos sem extensão caem em SEM_EXTENSAO.
+                extensao = item.suffix.lower() or SEM_EXTENSAO
+                dados["por_extensao"][extensao] += tamanho
             elif item.is_dir():
                 dados["n_pastas"] += 1
             # O que não é arquivo nem pasta (ex.: link quebrado) é ignorado.
@@ -169,26 +176,41 @@ def imprimir_maiores(pasta, dados):
         print(f"  {posicao:>2}.  {formatar_bytes(tamanho):>9}  {relativo}")
 
 
-def imprimir_subpastas(dados):
-    """Subpastas do primeiro nível ordenadas pelo tamanho."""
+def imprimir_ranking(titulo, tamanhos, total):
+    """Mostra um dicionário nome -> tamanho, do maior para o menor.
 
-    if not dados["por_subpasta"]:
+    Usada pelas seções de subpastas e de extensões: a lógica é a mesma,
+    só mudam o título e os dados.
+    """
+
+    if not tamanhos:
         return
 
-    # .items() dá pares (nome, tamanho); ordena pelo tamanho.
-    ordenadas = sorted(dados["por_subpasta"].items(),
+    # .items() dá pares (nome, tamanho); ordena pelo tamanho, o 2º elemento.
+    ordenados = sorted(tamanhos.items(),
                        key=lambda par: par[1], reverse=True)[:TOP]
 
-    largura = max(len(nome) for nome, _ in ordenadas)
-    total = dados["total"]
+    largura = max(len(nome) for nome, _ in ordenados)
 
-    print("\nSubpastas por tamanho")
-    for nome, tamanho in ordenadas:
+    print(f"\n{titulo}")
+    for nome, tamanho in ordenados:
         # Evita divisão por zero numa pasta só com arquivos vazios.
         porcentagem = tamanho / total * 100 if total else 0
         barra = barra_proporcional(porcentagem)
         print(f"  {nome:<{largura}}  {barra}  {formatar_bytes(tamanho):>9}"
               f"  {porcentagem:5.1f}%")
+
+
+def imprimir_subpastas(dados):
+    """Subpastas do primeiro nível ordenadas pelo tamanho."""
+    imprimir_ranking("Subpastas por tamanho",
+                     dados["por_subpasta"], dados["total"])
+
+
+def imprimir_extensoes(dados):
+    """Tipos de arquivo ordenados pelo espaço que ocupam."""
+    imprimir_ranking("Tamanho por extensão",
+                     dados["por_extensao"], dados["total"])
 
 
 def imprimir_rodape(dados):
@@ -214,6 +236,7 @@ def main():
     imprimir_resumo(pasta, dados)
     imprimir_maiores(pasta, dados)
     imprimir_subpastas(dados)
+    imprimir_extensoes(dados)
     imprimir_rodape(dados)
 
 
