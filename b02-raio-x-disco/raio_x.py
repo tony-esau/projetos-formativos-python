@@ -3,7 +3,9 @@ import sys
 from pathlib import Path
 from collections import defaultdict
 
+from historico import carregar_ultimo, resumo_para_salvar, salvar_relatorio
 from relatorio import (
+    imprimir_comparacao,
     imprimir_disco,
     imprimir_extensoes,
     imprimir_maiores,
@@ -12,9 +14,10 @@ from relatorio import (
     imprimir_subpastas,
 )
 
-# python raio_x.py [-h] [-n N] [CAMINHO]
+# python raio_x.py [-h] [-n N] [-s] [CAMINHO]
 
 OPCOES_AJUDA = {"-h", "--help", "-help"}
+OPCOES_SALVAR = {"-s", "--salvar"}
 OPCOES_TOP = {"-n", "--top"}  # opções que recebem um número logo depois
 TOP_PADRAO = 10  # quantos itens aparecem em cada ranking, se -n não vier
 RAIZ = "(arquivos na raiz)"  # chave dos arquivos soltos na pasta analisada
@@ -26,7 +29,7 @@ Varre uma pasta e todas as suas subpastas e mostra onde
 está o espaço ocupado: tamanho total, maiores arquivos,
 subpastas mais pesadas e tamanho por extensão.
 
-Uso: python raio_x.py [-h] [-n N] [CAMINHO]
+Uso: python raio_x.py [-h] [-n N] [-s] [CAMINHO]
 
 CAMINHO
   Pasta a ser analisada. Se não for informada, o
@@ -36,12 +39,18 @@ CAMINHO
 -n N, --top N
   Quantos itens mostrar em cada ranking (padrão: 10).
 
+-s, --salvar
+  Salva um resumo da análise em relatorios/. Se já houver
+  um relatório salvo da mesma pasta, o programa mostra o
+  que mudou desde a última vez, com ou sem esta opção.
+
 -h, --help
   Mostra esta ajuda.
 
 Exemplos:
   python raio_x.py C:\\Users\\joao\\Downloads
   python raio_x.py "C:\\Minha Pasta" -n 5
+  python raio_x.py C:\\Users\\joao\\Downloads -s
   python raio_x.py ."""
 
 
@@ -102,7 +111,7 @@ def separar_argumentos(argumentos):
             caminhos.append(limpar_texto_caminho(atual))
         i += 1
 
-    desconhecidas = opcoes - OPCOES_AJUDA
+    desconhecidas = opcoes - OPCOES_AJUDA - OPCOES_SALVAR
     if desconhecidas:
         encerrar_com_erro(
             f"opção desconhecida: {', '.join(sorted(desconhecidas))}")
@@ -229,13 +238,23 @@ def main():
 
     pasta = obter_pasta(caminhos)
     dados = varrer(pasta)
+    resumo = resumo_para_salvar(pasta, dados)
+    # Carrega a análise anterior antes de salvar a nova, senão a
+    # comparação seria da análise com ela mesma.
+    anterior = carregar_ultimo(pasta)
 
     imprimir_resumo(pasta, dados)
     imprimir_maiores(pasta, dados, top)
     imprimir_subpastas(dados, top)
     imprimir_extensoes(dados, top)
     imprimir_disco(pasta)
+    if anterior:
+        imprimir_comparacao(anterior, resumo, top)
     imprimir_rodape(dados)
+
+    if opcoes & OPCOES_SALVAR:
+        arquivo = salvar_relatorio(resumo)
+        print(f"\nRelatório salvo em: {arquivo}")
 
 
 if __name__ == "__main__":

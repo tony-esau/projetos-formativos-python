@@ -182,7 +182,7 @@ def test_pasta_sem_permissao_e_registrada(tmp_path, monkeypatch):
 
     dados = varrer(tmp_path)
     assert dados["sem_permissao"] == [secreta]
-    assert dados["total"] == 10   # o resto da varredura continua
+    assert dados["total"] == 10   # O resto da varredura continua.
 
 
 def test_rodape_lista_o_que_foi_ignorado(capsys):
@@ -222,9 +222,9 @@ def test_n_le_o_numero_e_nao_o_trata_como_caminho(argumentos):
 
 
 @pytest.mark.parametrize("argumentos", [
-    ["-n"],                 # faltou o número
-    ["-n", "cinco"],        # não é número
-    ["-n", "0"],            # precisa ser pelo menos 1
+    ["-n"],                 # Faltou o número.
+    ["-n", "cinco"],        # Não é número.
+    ["-n", "0"],            # Precisa ser pelo menos 1.
     ["-n", "-3"],
 ])
 def test_n_invalido_encerra(argumentos):
@@ -237,3 +237,11 @@ def test_maiores_respeita_o_top(pasta, dados, capsys):
     linhas = capsys.readouterr().out.strip().splitlines()
     # um título e duas linhas de ranking
     assert len(linhas) == 3
+
+# Opção -s.
+
+@pytest.mark.parametrize("opcao", ["-s", "--salvar"])
+def test_opcao_salvar_e_aceita(opcao):
+    opcoes, caminhos, _ = separar_argumentos(["Downloads", opcao])
+    assert opcao in opcoes
+    assert caminhos == ["Downloads"]

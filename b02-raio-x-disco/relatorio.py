@@ -5,7 +5,8 @@ Cada função recebe o dicionário montado por varrer() e imprime uma seção.
 
 import shutil
 
-from utils import barra_proporcional, formatar_bytes
+from historico import variacoes
+from utils import barra_proporcional, formatar_bytes, formatar_variacao
 
 TOP = 10  # valor padrão; o raio_x.py passa o que veio do -n
 
@@ -75,6 +76,42 @@ def imprimir_disco(pasta):
     print(f"\nDisco: {formatar_bytes(disco.total)} no total, "
           f"{formatar_bytes(disco.used)} usados, "
           f"{formatar_bytes(disco.free)} livres ({livre_pct:.0f}%)")
+
+
+def imprimir_variacoes(titulo, lista):
+    """Imprime pares (nome, diferença) com a diferença alinhada."""
+
+    if not lista:
+        return
+    largura = max(len(nome) for nome, _ in lista)
+    print(f"  {titulo}")
+    for nome, diferenca in lista:
+        print(f"    {nome:<{largura}}  {formatar_variacao(diferenca):>10}")
+
+
+def imprimir_comparacao(anterior, atual, top=TOP):
+    """Compara a análise atual com a anterior da mesma pasta.
+
+    anterior e atual são resumos no formato salvo em JSON.
+    """
+
+    print(f"\nDesde a última análise ({anterior['data']})")
+    print(f"  Total: {formatar_bytes(anterior['total'])} -> "
+          f"{formatar_bytes(atual['total'])} "
+          f"({formatar_variacao(atual['total'] - anterior['total'])})")
+    print(f"  Arquivos: {anterior['n_arquivos']} -> {atual['n_arquivos']}")
+
+    mudancas = variacoes(anterior["por_subpasta"], atual["por_subpasta"])
+    if not mudancas:
+        print("  Nenhuma subpasta mudou de tamanho.")
+        return
+
+    cresceram = [par for par in mudancas if par[1] > 0][:top]
+    # As quedas estão no fim da lista; invertidas, a maior queda vem antes.
+    diminuiram = [par for par in reversed(mudancas) if par[1] < 0][:top]
+
+    imprimir_variacoes("Subpastas que mais cresceram:", cresceram)
+    imprimir_variacoes("Subpastas que mais diminuíram:", diminuiram)
 
 
 def imprimir_rodape(dados):

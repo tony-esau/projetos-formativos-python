@@ -29,3 +29,12 @@ def barra_proporcional(porcentagem, largura=20):
     porcentagem = max(0, min(100, porcentagem))
     cheios = round(porcentagem / 100 * largura)
     return "█" * cheios + "░" * (largura - cheios)
+
+
+def formatar_variacao(n):
+    """Como formatar_bytes, mas com sinal: '+1.5 KB', '-300 B', '0 B'."""
+
+    if n == 0:
+        return "0 B"
+    sinal = "+" if n > 0 else "-"
+    return sinal + formatar_bytes(abs(n))

@@ -5,18 +5,18 @@ Rodar na pasta do projeto com:  python -m pytest
 
 import pytest
 
-from utils import barra_proporcional, formatar_bytes
+from utils import barra_proporcional, formatar_bytes, formatar_variacao
 
 
-# parametrize roda o mesmo teste uma vez para cada par (entrada, esperado).
+# Parametrize roda o mesmo teste uma vez para cada par (entrada, esperado).
 @pytest.mark.parametrize("entrada, esperado", [
     (0, "0 B"),
     (1, "1 B"),
-    (1023, "1023 B"),               # ainda não chega a 1 KB
-    (1024, "1.0 KB"),               # exatamente 1 KB
+    (1023, "1023 B"),               # Ainda não chega a 1 KB.
+    (1024, "1.0 KB"),               # Exatamente 1 KB.
     (1536, "1.5 KB"),
     (1024 ** 2, "1.0 MB"),
-    (1024 ** 3, "1.0 GB"),          # 1073741824 bytes
+    (1024 ** 3, "1.0 GB"),          # 1073741824 bytes.
     (int(2.5 * 1024 ** 3), "2.5 GB"),
     (1024 ** 4, "1.0 TB"),
 ])
@@ -33,13 +33,15 @@ def test_formatar_bytes_usa_uma_casa_decimal():
     """Valores quebrados são arredondados para uma casa decimal."""
     assert formatar_bytes(1100) == "1.1 KB"   # 1100 / 1024 = 1.074...
 
-# Barra.
+
+# Barra
+
 @pytest.mark.parametrize("porcentagem, esperado", [
     (0, "░░░░░░░░░░"),
     (50, "█████░░░░░"),
     (100, "██████████"),
-    (33.3, "███░░░░░░░"),     # 3.33 caracteres -> arredonda para 3
-    (36, "████░░░░░░"),       # 3.6 caracteres -> arredonda para 4
+    (33.3, "███░░░░░░░"),     # 3.33 caracteres -> arredonda para 3.
+    (36, "████░░░░░░"),       # 3.6 caracteres -> arredonda para 4.
 ])
 def test_barra_proporcional(porcentagem, esperado):
     assert barra_proporcional(porcentagem, largura=10) == esperado
@@ -58,3 +60,16 @@ def test_barra_limita_valores_fora_da_faixa():
 
 def test_barra_largura_padrao_e_20():
     assert len(barra_proporcional(50)) == 20
+
+
+# Variação.
+
+@pytest.mark.parametrize("entrada, esperado", [
+    (0, "0 B"),
+    (300, "+300 B"),
+    (-300, "-300 B"),
+    (1536, "+1.5 KB"),
+    (-1024 ** 3, "-1.0 GB"),
+])
+def test_formatar_variacao(entrada, esperado):
+    assert formatar_variacao(entrada) == esperado
