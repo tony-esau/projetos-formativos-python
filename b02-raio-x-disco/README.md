@@ -2,7 +2,7 @@
 
 Ferramenta de linha de comando que varre uma pasta e todas as suas subpastas e mostra **onde está o espaço ocupado**: o tamanho total, os maiores arquivos, as subpastas mais pesadas e quanto cada tipo de arquivo ocupa.
 
-Escrito em **Python puro**, apenas com a biblioteca padrão.
+Escrito em **Python puro**.
 
 > **Status:** em desenvolvimento.
 

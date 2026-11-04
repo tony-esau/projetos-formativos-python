@@ -7,7 +7,7 @@ import shutil
 
 from utils import barra_proporcional, formatar_bytes
 
-TOP = 10  # quantos itens aparecem em cada ranking
+TOP = 10  # valor padrão; o raio_x.py passa o que veio do -n
 
 
 def imprimir_resumo(pasta, dados):
@@ -18,11 +18,11 @@ def imprimir_resumo(pasta, dados):
           f"{dados['n_arquivos']} arquivo(s) e {dados['n_pastas']} pasta(s)")
 
 
-def imprimir_maiores(pasta, dados):
+def imprimir_maiores(pasta, dados, top=TOP):
     """Ranking dos maiores arquivos, com o caminho relativo à pasta."""
 
     # Tuplas são ordenadas pelo primeiro elemento: o tamanho.
-    maiores = sorted(dados["arquivos"], reverse=True)[:TOP]
+    maiores = sorted(dados["arquivos"], reverse=True)[:top]
 
     print("\nMaiores arquivos")
     for posicao, (tamanho, arquivo) in enumerate(maiores, start=1):
@@ -30,7 +30,7 @@ def imprimir_maiores(pasta, dados):
         print(f"  {posicao:>2}.  {formatar_bytes(tamanho):>9}  {relativo}")
 
 
-def imprimir_ranking(titulo, tamanhos, total):
+def imprimir_ranking(titulo, tamanhos, total, top=TOP):
     """Mostra um dicionário nome -> tamanho, do maior para o menor.
 
     Usada pelas seções de subpastas e de extensões: a lógica é a mesma,
@@ -42,7 +42,7 @@ def imprimir_ranking(titulo, tamanhos, total):
 
     # .items() dá pares (nome, tamanho); ordena pelo tamanho, o 2º elemento.
     ordenados = sorted(tamanhos.items(),
-                       key=lambda par: par[1], reverse=True)[:TOP]
+                       key=lambda par: par[1], reverse=True)[:top]
 
     largura = max(len(nome) for nome, _ in ordenados)
 
@@ -55,16 +55,16 @@ def imprimir_ranking(titulo, tamanhos, total):
               f"  {porcentagem:5.1f}%")
 
 
-def imprimir_subpastas(dados):
+def imprimir_subpastas(dados, top=TOP):
     """Subpastas do primeiro nível ordenadas pelo tamanho."""
     imprimir_ranking("Subpastas por tamanho",
-                     dados["por_subpasta"], dados["total"])
+                     dados["por_subpasta"], dados["total"], top)
 
 
-def imprimir_extensoes(dados):
+def imprimir_extensoes(dados, top=TOP):
     """Tipos de arquivo ordenados pelo espaço que ocupam."""
     imprimir_ranking("Tamanho por extensão",
-                     dados["por_extensao"], dados["total"])
+                     dados["por_extensao"], dados["total"], top)
 
 
 def imprimir_disco(pasta):
@@ -78,8 +78,26 @@ def imprimir_disco(pasta):
 
 
 def imprimir_rodape(dados):
-    """Avisos finais, como itens que não puderam ser lidos."""
+    """Avisos finais: o que ficou de fora da contagem e por quê."""
 
+    pastas = dados["sem_permissao"]
+    avisos = []
+    if pastas:
+        avisos.append(f"{len(pastas)} pasta(s) sem permissão de leitura")
+    if dados["links_quebrados"]:
+        avisos.append(f"{dados['links_quebrados']} link(s) quebrado(s)")
     if dados["ignorados"]:
-        print(f"\nItens ignorados: {dados['ignorados']} "
-              "(sem permissão ou inacessíveis)")
+        avisos.append(f"{dados['ignorados']} arquivo(s) que não puderam "
+                      "ser lidos")
+
+    if not avisos:
+        return
+
+    print("\nIgnorados na contagem:")
+    for aviso in avisos:
+        print(f"  - {aviso}")
+    # Mostra algumas das pastas, para o usuário saber onde estão.
+    for caminho in pastas[:5]:
+        print(f"      {caminho}")
+    if len(pastas) > 5:
+        print(f"      ... e mais {len(pastas) - 5}")
