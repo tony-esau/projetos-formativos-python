@@ -3,7 +3,7 @@ from pathlib import Path
 import shutil
 from collections import defaultdict
 
-from utils import formatar_bytes
+from utils import barra_proporcional, formatar_bytes
 
 # python raio_x.py [-h] [CAMINHO]
 
@@ -186,7 +186,8 @@ def imprimir_subpastas(dados):
     for nome, tamanho in ordenadas:
         # Evita divisão por zero numa pasta só com arquivos vazios.
         porcentagem = tamanho / total * 100 if total else 0
-        print(f"  {nome:<{largura}}  {formatar_bytes(tamanho):>9}"
+        barra = barra_proporcional(porcentagem)
+        print(f"  {nome:<{largura}}  {barra}  {formatar_bytes(tamanho):>9}"
               f"  {porcentagem:5.1f}%")
 
 
