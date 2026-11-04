@@ -1,14 +1,19 @@
 import sys
 from pathlib import Path
-import shutil
 from collections import defaultdict
 
-from utils import barra_proporcional, formatar_bytes
+from relatorio import (
+    imprimir_disco,
+    imprimir_extensoes,
+    imprimir_maiores,
+    imprimir_resumo,
+    imprimir_rodape,
+    imprimir_subpastas,
+)
 
 # python raio_x.py [-h] [CAMINHO]
 
 OPCOES_AJUDA = {"-h", "--help", "-help"}
-TOP = 10  # quantos itens aparecem em cada ranking
 RAIZ = "(arquivos na raiz)"  # chave dos arquivos soltos na pasta analisada
 SEM_EXTENSAO = "(sem extensão)"  # chave dos arquivos sem extensão
 
@@ -156,71 +161,6 @@ def varrer(pasta):
     return dados
 
 
-def imprimir_resumo(pasta, dados):
-    """Cabeçalho com o total, o número de arquivos e o de pastas."""
-
-    print(f"Raio-X de: {pasta}\n")
-    print(f"Total: {formatar_bytes(dados['total'])} em "
-          f"{dados['n_arquivos']} arquivo(s) e {dados['n_pastas']} pasta(s)")
-
-
-def imprimir_maiores(pasta, dados):
-    """Ranking dos maiores arquivos, com o caminho relativo à pasta."""
-
-    # Tuplas são ordenadas pelo primeiro elemento: o tamanho.
-    maiores = sorted(dados["arquivos"], reverse=True)[:TOP]
-
-    print("\nMaiores arquivos")
-    for posicao, (tamanho, arquivo) in enumerate(maiores, start=1):
-        relativo = arquivo.relative_to(pasta)
-        print(f"  {posicao:>2}.  {formatar_bytes(tamanho):>9}  {relativo}")
-
-
-def imprimir_ranking(titulo, tamanhos, total):
-    """Mostra um dicionário nome -> tamanho, do maior para o menor.
-
-    Usada pelas seções de subpastas e de extensões: a lógica é a mesma,
-    só mudam o título e os dados.
-    """
-
-    if not tamanhos:
-        return
-
-    # .items() dá pares (nome, tamanho); ordena pelo tamanho, o 2º elemento.
-    ordenados = sorted(tamanhos.items(),
-                       key=lambda par: par[1], reverse=True)[:TOP]
-
-    largura = max(len(nome) for nome, _ in ordenados)
-
-    print(f"\n{titulo}")
-    for nome, tamanho in ordenados:
-        # Evita divisão por zero numa pasta só com arquivos vazios.
-        porcentagem = tamanho / total * 100 if total else 0
-        barra = barra_proporcional(porcentagem)
-        print(f"  {nome:<{largura}}  {barra}  {formatar_bytes(tamanho):>9}"
-              f"  {porcentagem:5.1f}%")
-
-
-def imprimir_subpastas(dados):
-    """Subpastas do primeiro nível ordenadas pelo tamanho."""
-    imprimir_ranking("Subpastas por tamanho",
-                     dados["por_subpasta"], dados["total"])
-
-
-def imprimir_extensoes(dados):
-    """Tipos de arquivo ordenados pelo espaço que ocupam."""
-    imprimir_ranking("Tamanho por extensão",
-                     dados["por_extensao"], dados["total"])
-
-
-def imprimir_rodape(dados):
-    """Avisos finais, como itens que não puderam ser lidos."""
-
-    if dados["ignorados"]:
-        print(f"\nItens ignorados: {dados['ignorados']} "
-              "(sem permissão ou inacessíveis)")
-
-
 def main():
     """Fluxo principal: argumentos -> pasta -> varredura -> relatório."""
 
@@ -237,6 +177,7 @@ def main():
     imprimir_maiores(pasta, dados)
     imprimir_subpastas(dados)
     imprimir_extensoes(dados)
+    imprimir_disco(pasta)
     imprimir_rodape(dados)
 
 
