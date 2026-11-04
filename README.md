@@ -18,7 +18,7 @@ Todos os projetos usam **apenas Python puro** (linguagem e biblioteca padrão). 
 | Código | Projeto | Eixo | Conceitos principais | Status |
 |---|---|---|---|---|
 | B01 | [Organizador de pastas](b01-organizador-pastas/) | Computador | `pathlib`, `shutil`, modo simulação | ✅ Concluído |
-| B02 | [Agenda de contatos](b02-agenda-json/) | Arquivos | JSON, validação, backup de arquivo corrompido | 🔲 A fazer |
+| B02 | [Raio-X do disco](b02-raio-x-disco/) | Computador | `os.walk`, `stat`, `defaultdict`, histórico em JSON | ✅ Concluído |
 | B03 | [Jogo da velha](b03-jogo-da-velha/) | Jogos | recursão, minimax | 🔲 A fazer |
 | B04 | [Sistema bancário](b04-sistema-bancario/) | Orientação a objetos | herança, `@property`, exceções próprias | 🔲 A fazer |
 
