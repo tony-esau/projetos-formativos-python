@@ -3,9 +3,12 @@ from pathlib import Path
 import shutil
 from collections import defaultdict
 
+from test_utils import formatar_bytes
+
 # python raio_x.py [-h] [CAMINHO]
 
 OPCOES_AJUDA = {"-h", "--help", "-help"}
+TOP = 10  # quantos itens aparecem em cada ranking
 
 TEXTO_AJUDA = """------------------- Raio-X do disco -------------------
 
@@ -104,6 +107,66 @@ def obter_pasta(caminhos):
     return pasta.resolve()
 
 
+def varrer(pasta):
+    """Percorre a pasta e todas as subpastas uma única vez.
+
+    Retorno: um dicionário com tudo o que o relatório precisa.
+    """
+
+    dados = {
+        "total": 0,           # soma dos tamanhos dos arquivos, em bytes
+        "n_arquivos": 0,
+        "n_pastas": 0,
+        "arquivos": [],       # pares (tamanho, caminho) para o ranking
+        "ignorados": 0,       # itens que não puderam ser lidos
+    }
+
+    # .rglob("*") percorre recursivamente todos os arquivos e pastas.
+    for item in pasta.rglob("*"):
+        try:
+            if item.is_file():
+                # .stat().st_size é o tamanho do arquivo em bytes.
+                tamanho = item.stat().st_size
+                dados["total"] += tamanho
+                dados["n_arquivos"] += 1
+                dados["arquivos"].append((tamanho, item))
+            elif item.is_dir():
+                dados["n_pastas"] += 1
+            # O que não é arquivo nem pasta (ex.: link quebrado) é ignorado.
+        except OSError:
+            # Sem permissão, arquivo apagado no meio da varredura etc.
+            dados["ignorados"] += 1
+
+    return dados
+
+def imprimir_resumo(pasta, dados):
+    """Cabeçalho com o total, o número de arquivos e o de pastas."""
+
+    print(f"Raio-X de: {pasta}\n")
+    print(f"Total: {formatar_bytes(dados['total'])} em "
+          f"{dados['n_arquivos']} arquivo(s) e {dados['n_pastas']} pasta(s)")
+
+
+def imprimir_maiores(pasta, dados):
+    """Ranking dos maiores arquivos, com o caminho relativo à pasta."""
+
+    # Tuplas são ordenadas pelo primeiro elemento: o tamanho.
+    maiores = sorted(dados["arquivos"], reverse=True)[:TOP]
+
+    print("\nMaiores arquivos")
+    for posicao, (tamanho, arquivo) in enumerate(maiores, start=1):
+        relativo = arquivo.relative_to(pasta)
+        print(f"  {posicao:>2}.  {formatar_bytes(tamanho):>9}  {relativo}")
+
+
+def imprimir_rodape(dados):
+    """Avisos finais, como itens que não puderam ser lidos."""
+
+    if dados["ignorados"]:
+        print(f"\nItens ignorados: {dados['ignorados']} "
+              "(sem permissão ou inacessíveis)")
+
+
 def main():
     """Fluxo principal: argumentos -> pasta -> varredura -> relatório."""
 
@@ -114,7 +177,11 @@ def main():
         return
 
     pasta = obter_pasta(caminhos)
-    print(f"Raio-X de: {pasta}\n")
+    dados = varrer(pasta)
+
+    imprimir_resumo(pasta, dados)
+    imprimir_maiores(pasta, dados)
+    imprimir_rodape(dados)
 
 
 if __name__ == "__main__":
