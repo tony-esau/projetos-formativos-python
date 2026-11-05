@@ -1,23 +1,66 @@
+import os
+import subprocess
 from datetime import datetime
 
 from armazenamento import CAMINHO_PADRAO, carregar, gravar_csv, salvar
 from formatacao import normalizar_telefone, formatar_telefone, remover_acentos
 from validacao import validar_email, validar_telefone, validar_aniversario
 
+ERRO_TELEFONE = "Telefone inválido. Ex.: (88) 99999-1234 ou +1 415 555 2671"
+ERRO_EMAIL = "E-mail inválido. Ex.: ana.souza@gmail.com"
+ERRO_ANIVERSARIO = "Data inválida. Use DD/MM, como 15/03."
 
-def mostrar_menu():
-    """Mostra as opções do menu principal."""
+LARGURA_MENU = 36
 
-    print()
-    print("=== Agenda de contatos ===")
-    print("1. Adicionar contato")
-    print("2. Listar contatos")
-    print("3. Buscar")
-    print("4. Editar")
-    print("5. Remover")
-    print("6. Aniversariantes do mês")
-    print("7. Exportar CSV")
-    print("0. Sair")
+
+def limpar_tela():
+    """Apaga tudo o que está no terminal.
+
+    O comando muda com o sistema: cls no Windows, clear no Linux e no Mac.
+    shell=True é necessário porque o cls não é um programa, e sim um
+    comando de dentro do próprio terminal do Windows.
+    """
+
+    if os.name == "nt":
+        subprocess.run("cls", shell=True)
+    else:
+        subprocess.run("clear", shell=True)
+
+
+def pausar():
+    """Espera o usuário apertar Enter antes de seguir."""
+
+    input("\nPressione Enter para voltar ao menu...")
+
+
+def linha_da_caixa(texto=""):
+    """Devolve uma linha da caixa do menu, com o texto e as bordas laterais."""
+
+    return f"│ {texto:<{LARGURA_MENU}} │"
+
+
+def mostrar_menu(contatos):
+    """Mostra o menu principal numa caixa, com o número de contatos."""
+
+    borda = "─" * (LARGURA_MENU + 2)
+    total = f"{len(contatos)} contato(s) salvo(s)"
+
+    print(f"┌{borda}┐")
+    print(linha_da_caixa("AGENDA DE CONTATOS".center(LARGURA_MENU)))
+    print(linha_da_caixa(total.center(LARGURA_MENU)))
+    print(f"├{borda}┤")
+    for numero, (titulo, _) in OPCOES.items():
+        print(linha_da_caixa(f" {numero}  {titulo}"))
+    print(f"├{borda}┤")
+    print(linha_da_caixa(" 0  Sair"))
+    print(f"└{borda}┘")
+
+
+def mostrar_titulo(titulo):
+    """Mostra o título da tela atual, sublinhado."""
+
+    print(titulo.upper())
+    print("─" * len(titulo))
 
 
 def perguntar(rotulo, validar=None, obrigatorio=True, erro="Valor inválido."):
@@ -55,12 +98,11 @@ def adicionar(contatos):
 
     print("\nNovo contato (campos com * são obrigatórios)")
     nome = perguntar("Nome*")
-    telefone = perguntar("Telefone*", validar_telefone,
-                         erro="Telefone inválido. Ex.: (88) 99999-1234 ou +1 415 555 2671")
+    telefone = perguntar("Telefone*", validar_telefone, erro=ERRO_TELEFONE)
     email = perguntar("E-mail", validar_email, obrigatorio=False,
-                      erro="E-mail inválido. Ex.: ana.souza@gmail.com")
-    aniversario = perguntar("Aniversário (DD/MM)", validar_aniversario, obrigatorio=False,
-                            erro="Data inválida. Use DD/MM, como 15/03.")
+                      erro=ERRO_EMAIL)
+    aniversario = perguntar("Aniversário (DD/MM)", validar_aniversario,
+                            obrigatorio=False, erro=ERRO_ANIVERSARIO)
 
     contato = {
         "id": proximo_id(contatos),
@@ -86,10 +128,12 @@ def chave_nome(contato):
 def mostrar_contatos(lista):
     """Mostra uma lista de contatos em colunas alinhadas."""
 
-    # A coluna do nome fica com a largura do maior nome (no mínimo 4, de "Nome").
+    # A coluna do nome fica com a largura do maior nome
+    # (no mínimo 4, a largura da palavra "Nome").
     largura_nome = max(4, max(len(contato["nome"]) for contato in lista))
 
-    print(f"{'Id':>3}  {'Nome':<{largura_nome}}  {'Telefone':<20}  {'Aniv.':<5}  E-mail")
+    print(f"{'Id':>3}  {'Nome':<{largura_nome}}  "
+          f"{'Telefone':<20}  {'Aniv.':<5}  E-mail")
     for contato in lista:
         telefone = formatar_telefone(contato["telefone"])
         aniversario = contato["aniversario"] or "-"
@@ -111,7 +155,10 @@ def listar(contatos):
 
 
 def filtrar_por_nome(contatos, termo):
-    """Devolve os contatos cujo nome contém o termo, ignorando acentos e maiúsculas."""
+    """Devolve os contatos cujo nome contém o termo.
+
+    A comparação ignora acentos e maiúsculas.
+    """
 
     termo = remover_acentos(termo).lower()
 
@@ -150,7 +197,9 @@ def procurar_por_id(contatos, texto):
 
 
 def escolher_contato(contatos):
-    """Pede um nome ou um id e devolve o contato escolhido, ou None se o usuário desistir.
+    """Pede um nome ou um id e devolve o contato escolhido.
+
+    Devolve None se o usuário desistir.
 
     Número: procura pelo id.
     Texto: busca pelo nome. Se achar um só, já escolhe; se achar vários,
@@ -159,7 +208,7 @@ def escolher_contato(contatos):
     """
 
     while True:
-        resposta = input("Nome ou id do contato (Enter para cancelar): ").strip()
+        resposta = input("Nome ou id (Enter para cancelar): ").strip()
         if resposta == "":
             return None
 
@@ -190,9 +239,10 @@ def escolher_contato(contatos):
 
 
 def escolher_entre(encontrados):
-    """Pede o id de um dos contatos mostrados e devolve ele, ou None se o usuário desistir.
+    """Pede o id de um dos contatos mostrados e devolve ele.
 
     Só aceita ids que estão na lista de encontrados.
+    Devolve None se o usuário desistir.
     """
 
     while True:
@@ -228,13 +278,17 @@ def editar(contatos):
     print("\nEnter vazio mantém o valor que está entre colchetes.")
     telefone_atual = formatar_telefone(contato["telefone"])
 
+    email_atual = contato["email"] or "-"
+    aniversario_atual = contato["aniversario"] or "-"
+
     nome = perguntar(f"Nome [{contato['nome']}]", obrigatorio=False)
-    telefone = perguntar(f"Telefone [{telefone_atual}]", validar_telefone, obrigatorio=False,
-                         erro="Telefone inválido. Ex.: (88) 99999-1234 ou +1 415 555 2671")
-    email = perguntar(f"E-mail [{contato['email'] or '-'}]", validar_email, obrigatorio=False,
-                      erro="E-mail inválido. Ex.: ana.souza@gmail.com")
-    aniversario = perguntar(f"Aniversário [{contato['aniversario'] or '-'}]", validar_aniversario,
-                            obrigatorio=False, erro="Data inválida. Use DD/MM, como 15/03.")
+    telefone = perguntar(f"Telefone [{telefone_atual}]", validar_telefone,
+                         obrigatorio=False, erro=ERRO_TELEFONE)
+    email = perguntar(f"E-mail [{email_atual}]", validar_email,
+                      obrigatorio=False, erro=ERRO_EMAIL)
+    aniversario = perguntar(f"Aniversário [{aniversario_atual}]",
+                            validar_aniversario, obrigatorio=False,
+                            erro=ERRO_ANIVERSARIO)
 
     # Só troca o que foi digitado; o que ficou vazio continua como estava.
     if nome:
@@ -251,14 +305,20 @@ def editar(contatos):
 
 
 def confirmar(pergunta):
-    """Faz uma pergunta de sim ou não e devolve True só se a resposta for 's'."""
+    """Faz uma pergunta de sim ou não.
+
+    Devolve True só se a resposta for 's'.
+    """
 
     resposta = input(f"{pergunta} (s/n): ").strip().lower()
     return resposta == "s"
 
 
 def remover(contatos):
-    """Apaga um contato escolhido pelo nome ou pelo id, depois de confirmar, e salva."""
+    """Apaga um contato escolhido pelo nome ou pelo id e salva.
+
+    Pede confirmação antes de apagar.
+    """
 
     if not contatos:
         print("A agenda está vazia.")
@@ -318,12 +378,13 @@ def aniversariantes(contatos):
         else:
             situacao = ""
 
-        print(f"  {contato['aniversario']}  {contato['nome']:<{largura_nome}}  "
+        nome = contato["nome"]
+        print(f"  {contato['aniversario']}  {nome:<{largura_nome}}  "
               f"{telefone:<20}{situacao}")
 
 
 def exportar_csv(contatos):
-    """Gera um arquivo .csv com todos os contatos, em ordem alfabética, na pasta dados/.
+    """Gera um .csv com todos os contatos, em ordem alfabética, em dados/.
 
     O nome do arquivo leva a data, como contatos_2026-11-05.csv.
     """
@@ -335,9 +396,10 @@ def exportar_csv(contatos):
     data = datetime.now().strftime("%Y-%m-%d")
     caminho = CAMINHO_PADRAO.parent / f"contatos_{data}.csv"
 
-    if caminho.exists() and not confirmar(f"{caminho.name} já existe. Substituir?"):
-        print("Nada foi exportado.")
-        return
+    if caminho.exists():
+        if not confirmar(f"{caminho.name} já existe. Substituir?"):
+            print("Nada foi exportado.")
+            return
 
     # No CSV o telefone vai formatado: assim o Excel trata como texto,
     # e não como um número enorme em notação científica.
@@ -351,34 +413,45 @@ def exportar_csv(contatos):
     print(f"{len(linhas)} contato(s) exportado(s) para {caminho}")
 
 
+# Cada opção do menu: o número, o título que aparece e a função chamada.
+OPCOES = {
+    "1": ("Adicionar contato", adicionar),
+    "2": ("Listar contatos", listar),
+    "3": ("Buscar", buscar),
+    "4": ("Editar", editar),
+    "5": ("Remover", remover),
+    "6": ("Aniversariantes do mês", aniversariantes),
+    "7": ("Exportar CSV", exportar_csv),
+}
+
+
 def main():
     """Carrega os contatos e repete o menu até o usuário escolher sair."""
 
+    # Limpa antes de carregar: se o arquivo estiver corrompido, o aviso
+    # do carregar aparece em cima do menu, sem ser apagado.
+    limpar_tela()
     contatos = carregar()
 
     while True:
-        mostrar_menu()
+        mostrar_menu(contatos)
         opcao = input("Escolha: ").strip()
 
-        if opcao == "1":
-            adicionar(contatos)
-        elif opcao == "2":
-            listar(contatos)
-        elif opcao == "3":
-            buscar(contatos)
-        elif opcao == "4":
-            editar(contatos)
-        elif opcao == "5":
-            remover(contatos)
-        elif opcao == "6":
-            aniversariantes(contatos)
-        elif opcao == "7":
-            exportar_csv(contatos)
-        elif opcao == "0":
+        if opcao == "0":
             print("Até mais!")
             break
-        else:
+
+        if opcao not in OPCOES:
             print("Opção inválida, digite um número de 0 a 7.")
+        else:
+            titulo, funcao = OPCOES[opcao]
+            limpar_tela()
+            mostrar_titulo(titulo)
+            funcao(contatos)
+
+        # Espera o Enter e só depois limpa e volta ao menu.
+        pausar()
+        limpar_tela()
 
 
 if __name__ == "__main__":
