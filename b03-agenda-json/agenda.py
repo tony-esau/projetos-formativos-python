@@ -248,10 +248,32 @@ def editar(contatos):
     print(f"Contato {contato['nome']} atualizado.")
 
 
-def remover(contatos):
-    """Apaga um contato escolhido pelo id, depois de confirmar, e salva."""
+def confirmar(pergunta):
+    """Faz uma pergunta de sim ou não e devolve True só se a resposta for 's'."""
 
-    print("Em construção.")
+    resposta = input(f"{pergunta} (s/n): ").strip().lower()
+    return resposta == "s"
+
+
+def remover(contatos):
+    """Apaga um contato escolhido pelo nome ou pelo id, depois de confirmar, e salva."""
+
+    if not contatos:
+        print("A agenda está vazia.")
+        return
+
+    contato = escolher_contato(contatos)
+    if contato is None:
+        return
+
+    telefone = formatar_telefone(contato["telefone"])
+    if not confirmar(f"Remover {contato['nome']} ({telefone})?"):
+        print("Nada foi removido.")
+        return
+
+    contatos.remove(contato)
+    salvar(contatos)
+    print(f"Contato {contato['nome']} removido.")
 
 
 def aniversariantes(contatos):
