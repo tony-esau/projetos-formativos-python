@@ -1,5 +1,4 @@
 import re
-import unicodedata
 
 
 def validar_email(email):
@@ -22,14 +21,3 @@ def validar_telefone(telefone):
 
     padrao = re.compile(brasileiro + '|' + internacional)
     return bool(padrao.fullmatch(telefone))
-
-
-def remover_acentos(texto):
-    # NFD separa cada letra acentuada em duas partes: a letra e o acento.
-    # "é" vira "e" + "´". Depois, fica só com o que não é acento.
-    separado = unicodedata.normalize("NFD", texto)
-    sem_acentos = ""
-    for caractere in separado:
-        if not unicodedata.combining(caractere):
-            sem_acentos += caractere
-    return sem_acentos

@@ -1,6 +1,6 @@
 import pytest
 
-from validacao import validar_email, validar_telefone, remover_acentos
+from validacao import validar_email, validar_telefone
 
 
 EMAILS_VALIDOS = [
@@ -87,23 +87,3 @@ def test_telefone_valido(telefone):
 @pytest.mark.parametrize("telefone", TELEFONES_INVALIDOS)
 def test_telefone_invalido(telefone):
     assert not validar_telefone(telefone)
-
-
-@pytest.mark.parametrize("entrada, esperado", [
-    ("José", "Jose"),
-    ("ÁÉÍÓÚ", "AEIOU"),
-    ("ação", "acao"),
-    ("pão de açúcar", "pao de acucar"),
-    ("Müller", "Muller"),
-    ("à vontade", "a vontade"),
-    ("sem acento", "sem acento"),
-    ("", ""),
-])
-def test_remover_acentos(entrada, esperado):
-    assert remover_acentos(entrada) == esperado
-
-
-def test_busca_ignora_acento_e_maiuscula():
-    nome = "José da Silva"
-    busca = "jose"
-    assert remover_acentos(busca).lower() in remover_acentos(nome).lower()
