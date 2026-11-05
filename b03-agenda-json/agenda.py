@@ -1,6 +1,6 @@
-"""Agenda de contatos no terminal, com os dados salvos em JSON."""
-
 from armazenamento import carregar, salvar
+from formatacao import normalizar_telefone
+from validacao import validar_email, validar_telefone, validar_aniversario
 
 
 def mostrar_menu():
@@ -18,10 +18,58 @@ def mostrar_menu():
     print("0. Sair")
 
 
+def perguntar(rotulo, validar=None, obrigatorio=True, erro="Valor inválido."):
+    """Pergunta um campo e repete enquanto a resposta for inválida.
+
+    validar é uma função que recebe o texto e devolve True ou False.
+    Se o campo não for obrigatório, Enter vazio devolve "".
+    """
+
+    while True:
+        resposta = input(f"{rotulo}: ").strip()
+
+        if resposta == "":
+            if obrigatorio:
+                print("Este campo é obrigatório.")
+                continue
+            return ""
+
+        if validar is None or validar(resposta):
+            return resposta
+
+        print(erro)
+
+
+def proximo_id(contatos):
+    """Devolve o id do próximo contato: o maior id da lista mais 1."""
+
+    if not contatos:
+        return 1
+    return max(contato["id"] for contato in contatos) + 1
+
+
 def adicionar(contatos):
     """Pergunta os dados de um contato novo, adiciona na lista e salva."""
 
-    print("Em construção.")
+    print("\nNovo contato (campos com * são obrigatórios)")
+    nome = perguntar("Nome*")
+    telefone = perguntar("Telefone*", validar_telefone,
+                         erro="Telefone inválido. Ex.: (88) 99999-1234 ou +1 415 555 2671")
+    email = perguntar("E-mail", validar_email, obrigatorio=False,
+                      erro="E-mail inválido. Ex.: ana.souza@gmail.com")
+    aniversario = perguntar("Aniversário (DD/MM)", validar_aniversario, obrigatorio=False,
+                            erro="Data inválida. Use DD/MM, como 15/03.")
+
+    contato = {
+        "id": proximo_id(contatos),
+        "nome": nome,
+        "telefone": normalizar_telefone(telefone),
+        "email": email,
+        "aniversario": aniversario,
+    }
+    contatos.append(contato)
+    salvar(contatos)
+    print(f"Contato {nome} adicionado.")
 
 
 def listar(contatos):
