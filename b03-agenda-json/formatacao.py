@@ -3,8 +3,10 @@ import unicodedata
 
 
 def normalizar_telefone(telefone):
-    # Recebe um telefone já validado e devolve no formato que vai para o JSON:
-    # só o + e os dígitos, como "+5588999991234".
+    """Deixa um telefone já validado no formato que vai para o JSON.
+    Só o + e os dígitos: '(88) 99999-1234' -> '+5588999991234'.
+    """
+
     digitos = re.sub(r'\D', '', telefone)
 
     # Já veio com +: o código do país está nos dígitos.
@@ -20,9 +22,12 @@ def normalizar_telefone(telefone):
 
 
 def formatar_telefone(telefone):
-    # Recebe o telefone guardado e devolve no formato para mostrar na tela.
-    # Brasileiro: "+5588999991234" vira "+55 (88) 99999-1234".
-    # Internacional: fica do jeito que está guardado.
+    """Deixa o telefone guardado legível para mostrar na tela.
+
+    Brasileiro: '+5588999991234' -> '+55 (88) 99999-1234'.
+    Internacional: fica do jeito que está guardado.
+    """
+
     if not telefone.startswith('+55'):
         return telefone
 
@@ -33,6 +38,8 @@ def formatar_telefone(telefone):
 
 
 def remover_acentos(texto):
+    """Tira os acentos e a cedilha do texto: 'São João' -> 'Sao Joao'."""
+
     # NFD separa cada letra acentuada em duas partes: a letra e o acento.
     # "é" vira "e" + "´". Depois, fica só com o que não é acento.
     separado = unicodedata.normalize("NFD", texto)

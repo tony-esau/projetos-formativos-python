@@ -8,6 +8,12 @@ CAMINHO_PADRAO = Path(__file__).parent / "dados" / "contatos.json"
 
 
 def carregar(caminho=CAMINHO_PADRAO):
+    """Lê os contatos do JSON e devolve uma lista.
+
+    Se o arquivo não existe, devolve uma lista vazia. Se está corrompido,
+    guarda uma cópia em .bak e também devolve uma lista vazia.
+    """
+
     # Primeira vez rodando: ainda não existe arquivo, a agenda começa vazia.
     if not caminho.exists():
         return []
@@ -28,6 +34,8 @@ def carregar(caminho=CAMINHO_PADRAO):
 
 
 def fazer_backup(caminho):
+    """Copia o arquivo para um .bak com data e hora no nome e devolve o caminho dele."""
+
     # A data e a hora no nome evitam apagar um backup antigo.
     agora = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     backup = caminho.with_name(f"{caminho.stem}_{agora}.json.bak")
@@ -36,6 +44,8 @@ def fazer_backup(caminho):
 
 
 def salvar(contatos, caminho=CAMINHO_PADRAO):
+    """Grava a lista de contatos no JSON, mantendo os acentos legíveis."""
+
     # Cria a pasta dados/ se ela ainda não existir.
     caminho.parent.mkdir(parents=True, exist_ok=True)
 
