@@ -5,7 +5,8 @@ from armazenamento import carregar, salvar
 
 @pytest.fixture
 def caminho(tmp_path):
-    # Cada teste usa um contatos.json numa pasta temporária, nunca a agenda real.
+    # Cada teste usa um contatos.json numa pasta temporária,
+    # nunca a agenda real.
     return tmp_path / "dados" / "contatos.json"
 
 
@@ -89,3 +90,24 @@ def test_depois_do_backup_a_agenda_volta_a_funcionar(caminho, contatos):
     carregar(caminho)
     salvar(contatos, caminho)
     assert carregar(caminho) == contatos
+
+
+def test_gravar_csv(tmp_path, contatos):
+    import csv
+    from armazenamento import gravar_csv
+
+    caminho = tmp_path / "saida" / "contatos.csv"
+    gravar_csv(contatos, caminho)
+
+    # utf-8-sig: o arquivo começa com a marca que o Excel
+    # usa para reconhecer UTF-8.
+    assert caminho.read_bytes().startswith(b"\xef\xbb\xbf")
+
+    with open(caminho, encoding="utf-8-sig", newline="") as arquivo:
+        linhas = list(csv.DictReader(arquivo, delimiter=";"))
+
+    assert len(linhas) == 2
+    assert linhas[0]["nome"] == "José da Silva"
+    assert linhas[0]["aniversario"] == "15/03"
+    colunas = ["id", "nome", "telefone", "email", "aniversario"]
+    assert list(linhas[0].keys()) == colunas

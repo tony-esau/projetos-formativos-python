@@ -1,4 +1,6 @@
-from armazenamento import carregar, salvar
+from datetime import datetime
+
+from armazenamento import CAMINHO_PADRAO, carregar, gravar_csv, salvar
 from formatacao import normalizar_telefone, formatar_telefone, remover_acentos
 from validacao import validar_email, validar_telefone, validar_aniversario
 
@@ -276,16 +278,77 @@ def remover(contatos):
     print(f"Contato {contato['nome']} removido.")
 
 
-def aniversariantes(contatos):
-    """Mostra quem faz aniversário no mês atual, em ordem de dia."""
+MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho",
+         "agosto", "setembro", "outubro", "novembro", "dezembro"]
 
-    print("Em construção.")
+
+def aniversariantes(contatos):
+    """Mostra quem faz aniversário no mês atual, em ordem de dia.
+
+    Contatos sem aniversário cadastrado ficam de fora.
+    """
+
+    hoje = datetime.now()
+
+    # O aniversário é "DD/MM": [:2] é o dia e [3:] é o mês.
+    do_mes = []
+    for contato in contatos:
+        aniversario = contato["aniversario"]
+        if aniversario and int(aniversario[3:]) == hoje.month:
+            do_mes.append(contato)
+
+    nome_do_mes = MESES[hoje.month - 1]
+    if not do_mes:
+        print(f"Ninguém faz aniversário em {nome_do_mes}.")
+        return
+
+    do_mes.sort(key=lambda contato: int(contato["aniversario"][:2]))
+
+    largura_nome = max(len(contato["nome"]) for contato in do_mes)
+
+    print(f"\nAniversariantes de {nome_do_mes}:")
+    for contato in do_mes:
+        dia = int(contato["aniversario"][:2])
+        telefone = formatar_telefone(contato["telefone"])
+
+        if dia == hoje.day:
+            situacao = "  ← hoje!"
+        elif dia < hoje.day:
+            situacao = "  (já passou)"
+        else:
+            situacao = ""
+
+        print(f"  {contato['aniversario']}  {contato['nome']:<{largura_nome}}  "
+              f"{telefone:<20}{situacao}")
 
 
 def exportar_csv(contatos):
-    """Gera um arquivo .csv com todos os contatos."""
+    """Gera um arquivo .csv com todos os contatos, em ordem alfabética, na pasta dados/.
 
-    print("Em construção.")
+    O nome do arquivo leva a data, como contatos_2026-11-05.csv.
+    """
+
+    if not contatos:
+        print("A agenda está vazia, não há o que exportar.")
+        return
+
+    data = datetime.now().strftime("%Y-%m-%d")
+    caminho = CAMINHO_PADRAO.parent / f"contatos_{data}.csv"
+
+    if caminho.exists() and not confirmar(f"{caminho.name} já existe. Substituir?"):
+        print("Nada foi exportado.")
+        return
+
+    # No CSV o telefone vai formatado: assim o Excel trata como texto,
+    # e não como um número enorme em notação científica.
+    linhas = []
+    for contato in sorted(contatos, key=chave_nome):
+        linha = dict(contato)
+        linha["telefone"] = formatar_telefone(contato["telefone"])
+        linhas.append(linha)
+
+    gravar_csv(linhas, caminho)
+    print(f"{len(linhas)} contato(s) exportado(s) para {caminho}")
 
 
 def main():

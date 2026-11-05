@@ -4,6 +4,7 @@ import unicodedata
 
 def normalizar_telefone(telefone):
     """Deixa um telefone já validado no formato que vai para o JSON.
+
     Só o + e os dígitos: '(88) 99999-1234' -> '+5588999991234'.
     """
 

@@ -89,13 +89,16 @@ def test_telefone_invalido(telefone):
     assert not validar_telefone(telefone)
 
 
-@pytest.mark.parametrize("aniversario", ["15/03", "01/01", "31/12", "29/02", "30/04"])
+@pytest.mark.parametrize("aniversario", [
+    "15/03", "01/01", "31/12", "29/02", "30/04",
+])
 def test_aniversario_valido(aniversario):
     assert validar_aniversario(aniversario)
 
 
 @pytest.mark.parametrize("aniversario", [
-    "", "15-03", "15/3", "5/03", "15/03/2000", "32/01", "31/04", "30/02", "00/05", "15/13", "aa/bb",
+    "", "15-03", "15/3", "5/03", "15/03/2000", "32/01",
+    "31/04", "30/02", "00/05", "15/13", "aa/bb",
 ])
 def test_aniversario_invalido(aniversario):
     assert not validar_aniversario(aniversario)

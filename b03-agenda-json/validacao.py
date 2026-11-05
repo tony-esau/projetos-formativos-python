@@ -10,7 +10,7 @@ def validar_email(email):
 
 
 def validar_telefone(telefone):
-    """Diz se o telefone é brasileiro (com ou sem +55) ou internacional (com +).
+    """Diz se o telefone é brasileiro (com ou sem +55) ou internacional.
 
     Espaços e hífens são ignorados. Parênteses só valem em volta do código
     de área inteiro, como (88) ou (415).

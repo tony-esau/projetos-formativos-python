@@ -35,12 +35,14 @@ def test_formatar_telefone(guardado, mostrado):
 
 @pytest.mark.parametrize("telefone", TELEFONES_VALIDOS)
 def test_normalizar_duas_vezes_nao_muda(telefone):
+    # O formato guardado, se passar de novo pela normalização, continua igual.
     guardado = normalizar_telefone(telefone)
     assert normalizar_telefone(guardado) == guardado
 
 
 def test_formas_diferentes_do_mesmo_numero_viram_uma_so():
-    formas = ["(88) 99999-1234", "88999991234", "+55 (88) 99999-1234", "55 88 99999-1234"]
+    formas = ["(88) 99999-1234", "88999991234",
+              "+55 (88) 99999-1234", "55 88 99999-1234"]
     guardados = {normalizar_telefone(f) for f in formas}
     assert guardados == {"+5588999991234"}
 
@@ -60,6 +62,7 @@ def test_remover_acentos(entrada, esperado):
 
 
 def test_busca_ignora_acento_e_maiuscula():
+    # É assim que a busca da agenda vai comparar os nomes.
     nome = "José da Silva"
     busca = "jose"
     assert remover_acentos(busca).lower() in remover_acentos(nome).lower()
