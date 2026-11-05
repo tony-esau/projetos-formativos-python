@@ -1,5 +1,5 @@
 from armazenamento import carregar, salvar
-from formatacao import normalizar_telefone
+from formatacao import normalizar_telefone, formatar_telefone, remover_acentos
 from validacao import validar_email, validar_telefone, validar_aniversario
 
 
@@ -72,16 +72,63 @@ def adicionar(contatos):
     print(f"Contato {nome} adicionado.")
 
 
+def chave_nome(contato):
+    """Chave de ordenação: o nome sem acentos e em minúsculas.
+
+    Assim 'Álvaro' fica junto dos nomes com A, e não no fim da lista.
+    """
+
+    return remover_acentos(contato["nome"]).lower()
+
+
+def mostrar_contatos(lista):
+    """Mostra uma lista de contatos em colunas alinhadas."""
+
+    # A coluna do nome fica com a largura do maior nome (no mínimo 4, de "Nome").
+    largura_nome = max(4, max(len(contato["nome"]) for contato in lista))
+
+    print(f"{'Id':>3}  {'Nome':<{largura_nome}}  {'Telefone':<20}  {'Aniv.':<5}  E-mail")
+    for contato in lista:
+        telefone = formatar_telefone(contato["telefone"])
+        aniversario = contato["aniversario"] or "-"
+        email = contato["email"] or "-"
+        print(f"{contato['id']:>3}  {contato['nome']:<{largura_nome}}  "
+              f"{telefone:<20}  {aniversario:<5}  {email}")
+
+
 def listar(contatos):
     """Mostra todos os contatos em ordem alfabética."""
 
-    print("Em construção.")
+    if not contatos:
+        print("A agenda está vazia.")
+        return
+
+    print()
+    mostrar_contatos(sorted(contatos, key=chave_nome))
+    print(f"\n{len(contatos)} contato(s).")
 
 
 def buscar(contatos):
-    """Procura contatos pelo nome, ignorando acentos e maiúsculas."""
+    """Procura contatos pelo nome, ignorando acentos e maiúsculas.
 
-    print("Em construção.")
+    Basta um pedaço do nome: 'silva' encontra 'José da Silva'.
+    """
+
+    termo = perguntar("Buscar por nome")
+    termo = remover_acentos(termo).lower()
+
+    encontrados = []
+    for contato in contatos:
+        if termo in chave_nome(contato):
+            encontrados.append(contato)
+
+    if not encontrados:
+        print("Nenhum contato encontrado.")
+        return
+
+    print()
+    mostrar_contatos(sorted(encontrados, key=chave_nome))
+    print(f"\n{len(encontrados)} contato(s) encontrado(s).")
 
 
 def editar(contatos):
