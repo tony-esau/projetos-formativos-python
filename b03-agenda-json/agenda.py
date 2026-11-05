@@ -108,6 +108,18 @@ def listar(contatos):
     print(f"\n{len(contatos)} contato(s).")
 
 
+def filtrar_por_nome(contatos, termo):
+    """Devolve os contatos cujo nome contém o termo, ignorando acentos e maiúsculas."""
+
+    termo = remover_acentos(termo).lower()
+
+    encontrados = []
+    for contato in contatos:
+        if termo in chave_nome(contato):
+            encontrados.append(contato)
+    return encontrados
+
+
 def buscar(contatos):
     """Procura contatos pelo nome, ignorando acentos e maiúsculas.
 
@@ -115,12 +127,7 @@ def buscar(contatos):
     """
 
     termo = perguntar("Buscar por nome")
-    termo = remover_acentos(termo).lower()
-
-    encontrados = []
-    for contato in contatos:
-        if termo in chave_nome(contato):
-            encontrados.append(contato)
+    encontrados = filtrar_por_nome(contatos, termo)
 
     if not encontrados:
         print("Nenhum contato encontrado.")
@@ -131,10 +138,114 @@ def buscar(contatos):
     print(f"\n{len(encontrados)} contato(s) encontrado(s).")
 
 
-def editar(contatos):
-    """Altera os campos de um contato escolhido pelo id e salva."""
+def procurar_por_id(contatos, texto):
+    """Devolve o contato com o id digitado, ou None se não existir."""
 
-    print("Em construção.")
+    for contato in contatos:
+        if contato["id"] == int(texto):
+            return contato
+    return None
+
+
+def escolher_contato(contatos):
+    """Pede um nome ou um id e devolve o contato escolhido, ou None se o usuário desistir.
+
+    Número: procura pelo id.
+    Texto: busca pelo nome. Se achar um só, já escolhe; se achar vários,
+    mostra a tabela e pede o id de um dos que apareceram.
+    Enter vazio cancela.
+    """
+
+    while True:
+        resposta = input("Nome ou id do contato (Enter para cancelar): ").strip()
+        if resposta == "":
+            return None
+
+        # Só número: é um id.
+        if resposta.isdigit():
+            contato = procurar_por_id(contatos, resposta)
+            if contato is None:
+                print(f"Não existe contato com id {resposta}.")
+                continue
+            return contato
+
+        # Texto: é um pedaço do nome.
+        encontrados = filtrar_por_nome(contatos, resposta)
+
+        if not encontrados:
+            print("Nenhum contato encontrado com esse nome.")
+            continue
+
+        if len(encontrados) == 1:
+            print(f"Contato encontrado: {encontrados[0]['nome']}")
+            return encontrados[0]
+
+        # Vários: mostra só os encontrados e pede o id de um deles.
+        print(f"\n{len(encontrados)} contatos encontrados:")
+        mostrar_contatos(sorted(encontrados, key=chave_nome))
+        print()
+        return escolher_entre(encontrados)
+
+
+def escolher_entre(encontrados):
+    """Pede o id de um dos contatos mostrados e devolve ele, ou None se o usuário desistir.
+
+    Só aceita ids que estão na lista de encontrados.
+    """
+
+    while True:
+        resposta = input("Id de qual deles (Enter para cancelar): ").strip()
+        if resposta == "":
+            return None
+
+        if not resposta.isdigit():
+            print("Digite só o número do id.")
+            continue
+
+        contato = procurar_por_id(encontrados, resposta)
+        if contato is None:
+            print(f"O id {resposta} não está entre os mostrados.")
+            continue
+        return contato
+
+
+def editar(contatos):
+    """Altera os campos de um contato escolhido pelo id e salva.
+
+    Para cada campo, mostra o valor atual; Enter vazio mantém o valor.
+    """
+
+    if not contatos:
+        print("A agenda está vazia.")
+        return
+
+    contato = escolher_contato(contatos)
+    if contato is None:
+        return
+
+    print("\nEnter vazio mantém o valor que está entre colchetes.")
+    telefone_atual = formatar_telefone(contato["telefone"])
+
+    nome = perguntar(f"Nome [{contato['nome']}]", obrigatorio=False)
+    telefone = perguntar(f"Telefone [{telefone_atual}]", validar_telefone, obrigatorio=False,
+                         erro="Telefone inválido. Ex.: (88) 99999-1234 ou +1 415 555 2671")
+    email = perguntar(f"E-mail [{contato['email'] or '-'}]", validar_email, obrigatorio=False,
+                      erro="E-mail inválido. Ex.: ana.souza@gmail.com")
+    aniversario = perguntar(f"Aniversário [{contato['aniversario'] or '-'}]", validar_aniversario,
+                            obrigatorio=False, erro="Data inválida. Use DD/MM, como 15/03.")
+
+    # Só troca o que foi digitado; o que ficou vazio continua como estava.
+    if nome:
+        contato["nome"] = nome
+    if telefone:
+        contato["telefone"] = normalizar_telefone(telefone)
+    if email:
+        contato["email"] = email
+    if aniversario:
+        contato["aniversario"] = aniversario
+
+    salvar(contatos)
+    print(f"Contato {contato['nome']} atualizado.")
 
 
 def remover(contatos):
