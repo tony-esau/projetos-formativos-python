@@ -19,8 +19,12 @@ Todos os projetos usam **apenas Python puro** (linguagem e biblioteca padrão). 
 |---|---|---|---|---|
 | B01 | [Organizador de pastas](b01-organizador-pastas/) | Computador | `pathlib`, `shutil`, modo simulação | ✅ Concluído |
 | B02 | [Raio-X do disco](b02-raio-x-disco/) | Computador | `os.walk`, `stat`, `defaultdict`, histórico em JSON | ✅ Concluído |
+<<<<<<< HEAD
 | B03 | [Jogo da velha](b03-jogo-da-velha/) | Jogos | recursão, minimax | 🔲 A fazer |
 | B04 | [Sistema bancário](b04-sistema-bancario/) | Orientação a objetos | herança, `@property`, exceções próprias | 🔲 A fazer |
+=======
+| B03 | [Agenda de contatos](b03-agenda-json/) | Arquivos | JSON, validação, backup de arquivo corrompido | ⏳ Em andamento |
+>>>>>>> 830c9db (Início do projeto b03, uma agenda de telefones consistente em Json.)
 
 > Legenda: ✅ Concluído · ⏳ Em andamento · 🔲 A fazer
 
