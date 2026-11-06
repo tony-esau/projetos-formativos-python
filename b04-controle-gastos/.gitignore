@@ -1,0 +1,17 @@
+# Lançamentos reais: nunca vão para o GitHub (o de exemplo vai)
+dados/lancamentos.csv
+dados/*.bak
+
+# Relatórios gerados: têm os seus valores reais
+relatorios/*.txt
+
+# Python
+__pycache__/
+*.pyc
+
+# pytest
+.pytest_cache/
+
+# Ambiente virtual
+.venv/
+venv/
