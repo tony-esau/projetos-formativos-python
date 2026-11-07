@@ -1,0 +1,20 @@
+{
+  "receita": [
+    "Salário",
+    "Bolsa",
+    "Freelance",
+    "Presente",
+    "Outras receitas"
+  ],
+  "despesa": [
+    "Alimentação",
+    "Transporte",
+    "Moradia",
+    "Contas",
+    "Saúde",
+    "Educação",
+    "Lazer",
+    "Compras",
+    "Outras despesas"
+  ]
+}
