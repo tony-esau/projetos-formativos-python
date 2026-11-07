@@ -68,9 +68,14 @@ def test_mensagem_de_data_inexistente_e_clara():
         converter_data("31/02/2026")
 
 
-@pytest.mark.parametrize("texto", ["2026-11", "2025-01", "2026-12"])
-def test_mes_valido(texto):
-    assert converter_mes(texto) == texto
+@pytest.mark.parametrize("texto, esperado", [
+    ("11-2026", "2026-11"),
+    ("01-2025", "2025-01"),
+    ("12/2026", "2026-12"),
+    (" 03-2027 ", "2027-03"),
+])
+def test_mes_valido(texto, esperado):
+    assert converter_mes(texto) == esperado
 
 
 def test_mes_vazio_vira_mes_atual():
@@ -78,7 +83,7 @@ def test_mes_vazio_vira_mes_atual():
 
 
 @pytest.mark.parametrize("texto", [
-    "2026-13", "2026-00", "2026-1", "11/2026", "2026/11", "26-11", "abc",
+    "13-2026", "00-2026", "1-2026", "2026-11", "11-26", "11.2026", "abc",
 ])
 def test_mes_invalido(texto):
     with pytest.raises(ValueError):

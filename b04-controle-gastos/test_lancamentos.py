@@ -136,3 +136,29 @@ def test_filtrar_mes_e_ordenar():
 
 def test_filtrar_mes_sem_lancamentos():
     assert filtrar_mes([lancamento(5)], "2025-01") == []
+
+
+def test_importar_csv(tmp_path, caminho, categorias):
+    from lancamentos import importar_csv
+
+    adicionar_lancamento(lancamento(1), caminho)
+
+    origem = tmp_path / "extrato.csv"
+    origem.write_text(
+        "data,tipo,valor,categoria,descricao\n"
+        "2026-11-05,despesa,\"12,50\",alimentacao,Almoço\n"
+        "2026-11-31,despesa,10,Alimentação,data que não existe\n"
+        "2026-11-06,receita,1500,Salário,Pagamento\n"
+        "2026-11-07,despesa,10,Comida,categoria que não existe\n",
+        encoding="utf-8",
+    )
+
+    quantidade, invalidos = importar_csv(origem, categorias, caminho)
+    assert quantidade == 2
+    assert [numero for numero, _ in invalidos] == [3, 5]
+
+    # O lançamento que já existia continua lá, e os novos vêm depois.
+    validos, _ = ler_lancamentos(caminho)
+    assert len(validos) == 3
+    assert validos[1]["valor"] == Decimal("12.50")
+    assert validos[1]["categoria"] == "Alimentação"

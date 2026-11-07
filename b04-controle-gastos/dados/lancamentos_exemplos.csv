@@ -1,0 +1,41 @@
+data,tipo,valor,categoria,descricao
+2026-09-01,receita,700.00,Bolsa,Bolsa de iniciação científica
+2026-09-02,despesa,350.00,Moradia,Aluguel
+2026-09-03,despesa,89.90,Alimentação,Compras do mês no mercado
+2026-09-05,despesa,62.40,Contas,Conta de energia
+2026-09-08,despesa,45.00,Transporte,Passagens da semana
+2026-09-10,despesa,18.50,Alimentação,Almoço no restaurante universitário
+2026-09-12,receita,150.00,Freelance,Planilha para uma loja
+2026-09-15,despesa,59.90,Contas,Internet
+2026-09-17,despesa,32.00,Lazer,Cinema
+2026-09-20,despesa,27.80,Saúde,Farmácia
+2026-09-22,despesa,45.00,Transporte,Passagens da semana
+2026-09-26,despesa,74.90,Educação,"Livro de estatística, usado"
+2026-09-29,despesa,23.60,Alimentação,Lanche com os amigos
+2026-10-01,receita,700.00,Bolsa,Bolsa de iniciação científica
+2026-10-02,despesa,350.00,Moradia,Aluguel
+2026-10-04,despesa,112.35,Alimentação,Compras do mês no mercado
+2026-10-05,despesa,58.10,Contas,Conta de energia
+2026-10-07,despesa,45.00,Transporte,Passagens da semana
+2026-10-10,receita,50.00,Presente,Aniversário
+2026-10-11,despesa,129.00,Compras,Tênis
+2026-10-15,despesa,59.90,Contas,Internet
+2026-10-16,despesa,21.00,Alimentação,Pizza
+2026-10-18,despesa,45.00,Transporte,Passagens da semana
+2026-10-21,despesa,40.00,Lazer,Show na praça
+2026-10-24,despesa,15.75,Alimentação,Almoço no restaurante universitário
+2026-10-27,despesa,30.00,Educação,Inscrição em evento
+2026-10-30,despesa,12.00,Outras despesas,Cópias e impressões
+2026-11-01,receita,700.00,Bolsa,Bolsa de iniciação científica
+2026-11-02,despesa,350.00,Moradia,Aluguel
+2026-11-03,despesa,95.20,Alimentação,Compras do mês no mercado
+2026-11-04,receita,300.00,Freelance,Painel em Power BI
+2026-11-05,despesa,64.75,Contas,Conta de energia
+2026-11-06,despesa,45.00,Transporte,Passagens da semana
+2026-11-08,despesa,38.90,Saúde,Consulta no posto e remédio
+2026-11-10,despesa,19.90,Lazer,Assinatura de streaming
+2026-11-12,despesa,16.40,Alimentação,Almoço no restaurante universitário
+2026-11-15,despesa,59.90,Contas,Internet
+2026-11-18,despesa,45.00,Transporte,Passagens da semana
+2026-11-21,despesa,210.00,Compras,Fone de ouvido
+2026-11-25,despesa,27.30,Alimentação,Açaí

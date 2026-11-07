@@ -26,7 +26,7 @@ def converter_valor(texto):
     if valor == 0:
         raise ValueError("o valor precisa ser maior que zero")
 
-    # .quantize() deixa sempre com duas casas: 12 vira 12.00, 12.5 vira 12.50.
+    # quantize deixa sempre com duas casas: 12 vira 12.00, 12.5 vira 12.50.
     return valor.quantize(Decimal("0.01"))
 
 
@@ -50,8 +50,10 @@ def converter_data(texto):
 
 
 def converter_mes(texto):
-    """Confere um mês no formato 'AAAA-MM' e devolve o texto limpo.
+    """Converte um mês digitado como 'MM-AAAA' (ou 'MM/AAAA') em 'AAAA-MM'.
 
+    Por dentro o programa usa 'AAAA-MM', que é o começo das datas guardadas
+    no CSV e deixa os nomes dos relatórios em ordem cronológica.
     Texto vazio vira o mês atual. Recusa meses fora de 01 a 12.
     """
 
@@ -59,13 +61,15 @@ def converter_mes(texto):
 
     if texto == "":
         return date.today().strftime("%Y-%m")
-    if not re.fullmatch(r"\d{4}-\d{2}", texto):
-        raise ValueError(f"'{texto}' não está no formato AAAA-MM")
 
-    mes = int(texto[5:])
-    if not 1 <= mes <= 12:
-        raise ValueError(f"o mês {texto[5:]} não existe")
-    return texto
+    encontrado = re.fullmatch(r"(\d{2})[-/](\d{4})", texto)
+    if not encontrado:
+        raise ValueError(f"'{texto}' não está no formato MM-AAAA")
+
+    mes, ano = encontrado.groups()
+    if not 1 <= int(mes) <= 12:
+        raise ValueError(f"o mês {mes} não existe")
+    return f"{ano}-{mes}"
 
 
 def converter_tipo(texto):

@@ -1,3 +1,5 @@
+"""Funções que leem, gravam e filtram os lançamentos no arquivo CSV."""
+
 import csv
 import json
 from datetime import date
@@ -121,3 +123,17 @@ def filtrar_mes(lancamentos, mes):
         if lancamento["data"].strftime("%Y-%m") == mes:
             do_mes.append(lancamento)
     return sorted(do_mes, key=lambda lancamento: lancamento["data"])
+
+
+def importar_csv(origem, categorias, destino=CAMINHO_PADRAO):
+    """Copia os lançamentos válidos de outro CSV para o arquivo principal.
+
+    Cada linha passa pelas mesmas conversões do menu, inclusive a das
+    categorias. Devolve (quantidade importada, invalidos), em que invalidos
+    é a lista de (número da linha, motivo) das linhas puladas.
+    """
+
+    validos, invalidos = ler_lancamentos(origem, categorias)
+    for lancamento in validos:
+        adicionar_lancamento(lancamento, destino)
+    return len(validos), invalidos
