@@ -103,6 +103,25 @@ def comparavel(texto):
     return remover_acentos(texto.strip()).lower()
 
 
+def converter_nova_categoria(texto, existentes):
+    """Confere o nome de uma categoria nova e devolve ele já limpo.
+
+    Recusa nome vazio, nome com mais de 20 letras e nome que já existe,
+    ignorando acentos e maiúsculas.
+    """
+
+    nome = texto.strip()
+
+    if nome == "":
+        raise ValueError("o nome está vazio")
+    if len(nome) > 20:
+        raise ValueError("use no máximo 20 caracteres")
+    for existente in existentes:
+        if comparavel(nome) == comparavel(existente):
+            raise ValueError(f"a categoria {existente} já existe")
+    return nome
+
+
 def converter_categoria(texto, permitidas):
     """Devolve a categoria da lista permitidas que corresponde ao texto.
 

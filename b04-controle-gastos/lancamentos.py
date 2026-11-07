@@ -1,8 +1,7 @@
-"""Funções que leem, gravam e filtram os lançamentos no arquivo CSV."""
-
 import csv
 import json
 from datetime import date
+from decimal import Decimal
 from pathlib import Path
 
 from validacao import (converter_categoria, converter_tipo,
@@ -11,6 +10,7 @@ from validacao import (converter_categoria, converter_tipo,
 PASTA = Path(__file__).parent
 CAMINHO_PADRAO = PASTA / "dados" / "lancamentos.csv"
 CAMINHO_CATEGORIAS = PASTA / "categorias.json"
+CAMINHO_ORCAMENTO = PASTA / "orcamento.json"
 
 # A ordem das colunas no CSV.
 CAMPOS = ["data", "tipo", "valor", "categoria", "descricao"]
@@ -20,6 +20,40 @@ def carregar_categorias(caminho=CAMINHO_CATEGORIAS):
     """Lê o categorias.json e devolve o dicionário {tipo: [categorias]}."""
 
     return json.loads(caminho.read_text(encoding="utf-8"))
+
+
+def carregar_orcamento(caminho=CAMINHO_ORCAMENTO):
+    """Lê o orcamento.json e devolve {categoria: limite como Decimal}.
+
+    Sem o arquivo, devolve um dicionário vazio, e o relatório sai sem a
+    parte do orçamento.
+    """
+
+    if not caminho.exists():
+        return {}
+
+    # parse_float e parse_int fazem o json já criar Decimal, em vez de float.
+    texto = caminho.read_text(encoding="utf-8")
+    return json.loads(texto, parse_float=Decimal, parse_int=Decimal)
+
+
+def salvar_categorias(categorias, caminho=CAMINHO_CATEGORIAS):
+    """Grava o dicionário {tipo: [categorias]} no categorias.json."""
+
+    texto = json.dumps(categorias, ensure_ascii=False, indent=2)
+    caminho.write_text(texto + "\n", encoding="utf-8")
+
+
+def salvar_orcamento(orcamento, caminho=CAMINHO_ORCAMENTO):
+    """Grava o dicionário {categoria: limite} no orcamento.json."""
+
+    # O json não sabe gravar Decimal. Com duas casas, o float é escrito
+    # exatamente como o valor digitado (150.5 vira 150.5), e o
+    # carregar_orcamento volta a ler como Decimal.
+    numeros = {categoria: float(limite)
+               for categoria, limite in orcamento.items()}
+    texto = json.dumps(numeros, ensure_ascii=False, indent=2)
+    caminho.write_text(texto + "\n", encoding="utf-8")
 
 
 def converter_linha(linha, categorias=None):

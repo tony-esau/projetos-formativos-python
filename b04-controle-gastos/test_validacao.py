@@ -121,3 +121,19 @@ def test_categoria_valida(texto, esperado):
 def test_categoria_invalida(texto):
     with pytest.raises(ValueError):
         converter_categoria(texto, PERMITIDAS)
+
+
+def test_nova_categoria_valida():
+    from validacao import converter_nova_categoria
+
+    assert converter_nova_categoria("  Pets ", PERMITIDAS) == "Pets"
+
+
+@pytest.mark.parametrize("texto", [
+    "", "   ", "alimentacao", "SAÚDE", "Um nome grande demais aqui",
+])
+def test_nova_categoria_invalida(texto):
+    from validacao import converter_nova_categoria
+
+    with pytest.raises(ValueError):
+        converter_nova_categoria(texto, PERMITIDAS)

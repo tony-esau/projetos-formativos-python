@@ -162,3 +162,40 @@ def test_importar_csv(tmp_path, caminho, categorias):
     assert len(validos) == 3
     assert validos[1]["valor"] == Decimal("12.50")
     assert validos[1]["categoria"] == "Alimentação"
+
+
+def test_carregar_orcamento(tmp_path):
+    from lancamentos import carregar_orcamento
+
+    caminho = tmp_path / "orcamento.json"
+    caminho.write_text('{"Lazer": 50, "Alimentação": 150.5}',
+                       encoding="utf-8")
+    orcamento = carregar_orcamento(caminho)
+    assert orcamento == {"Lazer": Decimal("50"),
+                         "Alimentação": Decimal("150.5")}
+    assert isinstance(orcamento["Alimentação"], Decimal)
+
+
+def test_orcamento_inexistente_fica_vazio(tmp_path):
+    from lancamentos import carregar_orcamento
+
+    assert carregar_orcamento(tmp_path / "nao_existe.json") == {}
+
+
+def test_salvar_e_carregar_categorias(tmp_path):
+    from lancamentos import salvar_categorias
+
+    caminho = tmp_path / "categorias.json"
+    categorias = {"receita": ["Salário"], "despesa": ["Pão", "Café"]}
+    salvar_categorias(categorias, caminho)
+    assert carregar_categorias(caminho) == categorias
+    assert "Pão" in caminho.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("limite", ["150.00", "12.30", "0.10", "99.99"])
+def test_salvar_e_carregar_orcamento_sem_perder_centavos(tmp_path, limite):
+    from lancamentos import carregar_orcamento, salvar_orcamento
+
+    caminho = tmp_path / "orcamento.json"
+    salvar_orcamento({"Lazer": Decimal(limite)}, caminho)
+    assert carregar_orcamento(caminho) == {"Lazer": Decimal(limite)}

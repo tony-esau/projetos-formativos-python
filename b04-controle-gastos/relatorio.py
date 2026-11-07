@@ -94,11 +94,55 @@ def grafico_barras_texto(por_categoria, total):
     return linhas
 
 
-def montar_relatorio(mes, resumo):
+def comparar_orcamento(por_categoria, orcamento):
+    """Compara o gasto de cada categoria com o limite do orçamento.
+
+    Devolve uma lista de (categoria, gasto, limite), só das categorias que
+    têm limite, com as que mais passaram do limite primeiro.
+    """
+
+    comparacao = []
+    for categoria, limite in orcamento.items():
+        gasto = por_categoria.get(categoria, Decimal("0"))
+        comparacao.append((categoria, gasto, limite))
+
+    # Ordena pela sobra: gasto - limite. Quem passou mais fica em cima.
+    return sorted(comparacao, key=lambda item: item[1] - item[2],
+                  reverse=True)
+
+
+def linhas_orcamento(por_categoria, orcamento):
+    """Devolve as linhas da parte do orçamento no relatório."""
+
+    comparacao = comparar_orcamento(por_categoria, orcamento)
+    largura_nome = max(len(categoria) for categoria, _, _ in comparacao)
+    passaram = 0
+
+    linhas = ["Orçamento"]
+    for categoria, gasto, limite in comparacao:
+        if gasto > limite:
+            passaram += 1
+            situacao = f"passou {formatar_moeda(gasto - limite)}"
+        else:
+            situacao = f"sobram {formatar_moeda(limite - gasto)}"
+
+        linhas.append(f"  {categoria:<{largura_nome}}  "
+                      f"{formatar_moeda(gasto):>12} de "
+                      f"{formatar_moeda(limite):>12}  {situacao}")
+
+    if passaram == 0:
+        linhas.append("  Nenhuma categoria passou do limite.")
+    else:
+        linhas.append(f"  {passaram} categoria(s) passaram do limite.")
+    return linhas
+
+
+def montar_relatorio(mes, resumo, orcamento=None):
     """Monta o relatório do mês como um texto só.
 
     O mesmo texto é mostrado na tela e gravado no arquivo, então os dois
-    ficam sempre idênticos.
+    ficam sempre idênticos. Com um orçamento, o relatório mostra também o
+    gasto de cada categoria comparado ao limite.
     """
 
     titulo = f"Relatório de {nome_do_mes(mes)}"
@@ -126,6 +170,10 @@ def montar_relatorio(mes, resumo):
         linhas.append(f"Maior despesa: {formatar_moeda(maior['valor'])} "
                       f"em {data}, {maior['categoria']}"
                       f" ({maior['descricao'] or 'sem descrição'})")
+        linhas.append("")
+
+    if orcamento:
+        linhas += linhas_orcamento(resumo["por_categoria"], orcamento)
         linhas.append("")
 
     linhas.append(f"{resumo['quantidade']} lançamento(s) no mês.")

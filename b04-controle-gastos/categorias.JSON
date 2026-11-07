@@ -4,7 +4,8 @@
     "Bolsa",
     "Freelance",
     "Presente",
-    "Outras receitas"
+    "Outras receitas",
+    "Jogos de VideoGame"
   ],
   "despesa": [
     "Alimentação",
@@ -15,6 +16,7 @@
     "Educação",
     "Lazer",
     "Compras",
-    "Outras despesas"
+    "Outras despesas",
+    "Jogos de Video Game"
   ]
 }

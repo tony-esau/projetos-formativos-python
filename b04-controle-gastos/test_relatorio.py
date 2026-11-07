@@ -133,3 +133,42 @@ def test_arquivo_salvo_identico_ao_texto(tmp_path, novembro):
 
     assert caminho.name == "relatorio_2026-11.txt"
     assert caminho.read_text(encoding="utf-8") == texto
+
+
+ORCAMENTO = {"Alimentação": Decimal("50.00"), "Moradia": Decimal("600.00"),
+             "Lazer": Decimal("20.00")}
+
+
+def test_comparar_orcamento_ordena_quem_passou_mais_primeiro(novembro):
+    from relatorio import comparar_orcamento
+
+    por_categoria = resumo_mes(novembro)["por_categoria"]
+    comparacao = comparar_orcamento(por_categoria, ORCAMENTO)
+    assert comparacao == [
+        ("Alimentação", Decimal("58.40"), Decimal("50.00")),
+        ("Moradia", Decimal("600.00"), Decimal("600.00")),
+        ("Lazer", Decimal("0.30"), Decimal("20.00")),
+    ]
+
+
+def test_categoria_do_orcamento_sem_gasto_conta_como_zero():
+    from relatorio import comparar_orcamento
+
+    comparacao = comparar_orcamento({}, {"Saúde": Decimal("80")})
+    assert comparacao == [("Saúde", Decimal("0"), Decimal("80"))]
+
+
+def test_relatorio_com_orcamento(novembro):
+    texto = montar_relatorio("2026-11", resumo_mes(novembro), ORCAMENTO)
+    assert "Orçamento" in texto
+    assert "passou R$ 8,40" in texto
+    # Gastar exatamente o limite não é passar do limite.
+    assert "sobram R$ 0,00" in texto
+    assert "1 categoria(s) passaram do limite." in texto
+
+
+def test_relatorio_sem_orcamento_nao_tem_a_secao(novembro):
+    assert "Orçamento" not in montar_relatorio("2026-11",
+                                               resumo_mes(novembro))
+    assert "Orçamento" not in montar_relatorio("2026-11",
+                                               resumo_mes(novembro), {})

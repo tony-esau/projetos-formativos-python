@@ -3,12 +3,14 @@ import subprocess
 from pathlib import Path
 
 from lancamentos import (CAMINHO_PADRAO, adicionar_lancamento,
-                         carregar_categorias, filtrar_mes, importar_csv,
-                         ler_lancamentos)
+                         carregar_categorias, carregar_orcamento, filtrar_mes,
+                         importar_csv, ler_lancamentos, salvar_categorias,
+                         salvar_orcamento)
 from relatorio import (formatar_moeda, montar_relatorio, nome_do_mes,
                        resumo_mes, salvar_relatorio)
 from validacao import (converter_categoria, converter_data, converter_mes,
-                       converter_tipo, converter_valor)
+                       converter_nova_categoria, converter_tipo,
+                       converter_valor)
 
 LARGURA_MENU = 36
 
@@ -139,7 +141,10 @@ def relatorio_mes(categorias):
     mes = perguntar("Mês (MM-AAAA, Enter para o atual)", converter_mes)
     do_mes = filtrar_mes(ler_com_aviso(), mes)
 
-    texto = montar_relatorio(mes, resumo_mes(do_mes))
+    # O orçamento é lido a cada relatório, então mudanças no orcamento.json
+    # valem sem precisar reiniciar o programa.
+    orcamento = carregar_orcamento()
+    texto = montar_relatorio(mes, resumo_mes(do_mes), orcamento)
     print()
     print(texto)
 
@@ -181,12 +186,127 @@ def importar(categorias):
             print(f"  linha {numero}: {motivo}")
 
 
+def converter_limite(texto):
+    """Converte o limite do orçamento. Enter vazio vira None (sem limite)."""
+
+    if texto.strip() == "":
+        return None
+    return converter_valor(texto)
+
+
+def mostrar_categorias(categorias, orcamento):
+    """Mostra as categorias de despesa com o limite e as de receita."""
+
+    print("Despesas (limite do orçamento por mês)")
+    for categoria in categorias["despesa"]:
+        limite = orcamento.get(categoria)
+        texto = formatar_moeda(limite) if limite is not None else "-"
+        print(f"  {categoria:<20}  {texto:>12}")
+
+    print("\nReceitas")
+    for categoria in categorias["receita"]:
+        print(f"  {categoria}")
+
+
+def adicionar_categoria(categorias, orcamento):
+    """Cria uma categoria nova e, se for de despesa, pergunta o limite."""
+
+    tipo = perguntar("Tipo (r = receita, d = despesa)", converter_tipo)
+    todas = categorias["receita"] + categorias["despesa"]
+    nome = perguntar("Nome da categoria",
+                     lambda texto: converter_nova_categoria(texto, todas))
+
+    categorias[tipo].append(nome)
+    salvar_categorias(categorias)
+
+    if tipo == "despesa":
+        limite = perguntar("Limite por mês (Enter para não ter limite)",
+                           converter_limite)
+        if limite is not None:
+            orcamento[nome] = limite
+            salvar_orcamento(orcamento)
+
+    print(f"\nCategoria {nome} criada.")
+
+
+def definir_limite(categorias, orcamento):
+    """Define, troca ou apaga o limite de uma categoria de despesa."""
+
+    categoria = escolher_categoria(categorias["despesa"])
+    atual = orcamento.get(categoria)
+    texto_atual = formatar_moeda(atual) if atual is not None else "sem limite"
+
+    print(f"Limite atual: {texto_atual}")
+    limite = perguntar("Novo limite (Enter para ficar sem limite)",
+                       converter_limite)
+
+    if limite is None:
+        orcamento.pop(categoria, None)
+        print(f"\n{categoria} ficou sem limite.")
+    else:
+        orcamento[categoria] = limite
+        print(f"\nLimite de {categoria}: {formatar_moeda(limite)}.")
+    salvar_orcamento(orcamento)
+
+
+def remover_categoria(categorias, orcamento):
+    """Apaga uma categoria e o limite dela, mantendo os lançamentos antigos."""
+
+    tipo = perguntar("Tipo (r = receita, d = despesa)", converter_tipo)
+    if len(categorias[tipo]) == 1:
+        print("É preciso ter pelo menos uma categoria de cada tipo.")
+        return
+
+    categoria = escolher_categoria(categorias[tipo])
+    resposta = input(f"Remover {categoria}? Os lançamentos já feitos "
+                     f"continuam no CSV. (s/n): ")
+    if resposta.strip().lower() != "s":
+        print("Nada foi removido.")
+        return
+
+    categorias[tipo].remove(categoria)
+    salvar_categorias(categorias)
+    if orcamento.pop(categoria, None) is not None:
+        salvar_orcamento(orcamento)
+    print(f"\nCategoria {categoria} removida.")
+
+
+def gerenciar_categorias(categorias):
+    """Mostra as categorias e o orçamento e deixa criar, alterar e apagar."""
+
+    acoes = {
+        "1": adicionar_categoria,
+        "2": definir_limite,
+        "3": remover_categoria,
+    }
+
+    while True:
+        orcamento = carregar_orcamento()
+        mostrar_categorias(categorias, orcamento)
+
+        print("\n1. Nova categoria   2. Definir limite   "
+              "3. Remover categoria   0. Voltar")
+        opcao = input("Escolha: ").strip()
+        if opcao == "0":
+            return
+        if opcao not in acoes:
+            print("Opção inválida.")
+        else:
+            print()
+            acoes[opcao](categorias, orcamento)
+
+        input("\nPressione Enter para continuar...")
+        limpar_tela()
+        mostrar_titulo("Categorias e orçamento")
+
+
 # Cada opção do menu: o número, o título que aparece e a função chamada.
 OPCOES = {
     "1": ("Novo lançamento", novo_lancamento),
     "2": ("Lançamentos do mês", listar_mes),
     "3": ("Relatório do mês", relatorio_mes),
     "4": ("Importar CSV", importar),
+    "5": ("Categorias e orçamento", gerenciar_categorias),
 }
 
 
