@@ -19,12 +19,10 @@ Todos os projetos usam **apenas Python puro** (linguagem e biblioteca padrão). 
 |---|---|---|---|---|
 | B01 | [Organizador de pastas](b01-organizador-pastas/) | Computador | `pathlib`, `shutil`, modo simulação | ✅ Concluído |
 | B02 | [Raio-X do disco](b02-raio-x-disco/) | Computador | `os.walk`, `stat`, `defaultdict`, histórico em JSON | ✅ Concluído |
-<<<<<<< HEAD
-| B03 | [Jogo da velha](b03-jogo-da-velha/) | Jogos | recursão, minimax | 🔲 A fazer |
-| B04 | [Sistema bancário](b04-sistema-bancario/) | Orientação a objetos | herança, `@property`, exceções próprias | 🔲 A fazer |
-=======
-| B03 | [Agenda de contatos](b03-agenda-json/) | Arquivos | JSON, validação, backup de arquivo corrompido | ⏳ Em andamento |
->>>>>>> 830c9db (Início do projeto b03, uma agenda de telefones consistente em Json.)
+| B03 | [Agenda de contatos](b03-agenda-json/) | Arquivos | JSON, validação, backup de arquivo corrompido | ✅ Concluído |
+| B04 | [Controle de gastos](b04-controle-gastos/) | Arquivos | CSV, relatório mensal, orçamento por categoria | ✅ Concluído |
+| B05 | Jogo da velha | Jogos | recursão, minimax | 🔲 A fazer |
+| B06 | Sistema bancário | Orientação a objetos | herança, `@property`, exceções próprias | 🔲 A fazer |
 
 > Legenda: ✅ Concluído · ⏳ Em andamento · 🔲 A fazer
 
@@ -40,7 +38,7 @@ projetos-formativos-python/
 │   ├── README.md              <- O que faz, como rodar, o que aprendi.
 │   ├── organizador.py
 │   └── ...
-├── b04-agenda-json/
+├── b03-agenda-json/
 └── ...
 ```
 
