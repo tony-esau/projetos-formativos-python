@@ -42,3 +42,21 @@ def test_cursor_em_casa_ocupada():
 ])
 def test_mover_cursor(cursor, direcao, esperado):
     assert mover_cursor(cursor, direcao) == esperado
+
+
+def test_menu_marca_a_opcao_selecionada():
+    from tela import desenhar_menu
+
+    texto = desenhar_menu("Dificuldade", ["Fácil", "Médio"], 1)
+    assert texto.split("\n") == [
+        "Dificuldade", "───────────", "",
+        "   1. Fácil",
+        " ▶ 2. Médio",
+    ]
+
+
+def test_placar():
+    from tela import desenhar_placar
+
+    placar = {"Você": 2, "Computador": 0, "Empates": 1}
+    assert desenhar_placar(placar) == "Você 2  ·  Computador 0  ·  Empates 1"

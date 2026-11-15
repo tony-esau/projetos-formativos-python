@@ -59,3 +59,23 @@ def desenhar_tabuleiro(tab, cursor=None):
     for inicio in (0, 3, 6):
         linhas.append("|".join(celulas[inicio:inicio + 3]))
     return "\n---+---+---\n".join(linhas)
+
+
+def desenhar_menu(titulo, opcoes, selecionada):
+    """Devolve um menu como texto, com uma seta na opção selecionada.
+
+    As opções são numeradas a partir de 1, para também poderem ser
+    escolhidas pelo número.
+    """
+
+    linhas = [titulo, "─" * len(titulo), ""]
+    for numero, opcao in enumerate(opcoes, start=1):
+        marca = "▶" if numero - 1 == selecionada else " "
+        linhas.append(f" {marca} {numero}. {opcao}")
+    return "\n".join(linhas)
+
+
+def desenhar_placar(placar):
+    """Devolve o placar da sessão numa linha, como 'Você 2 · Empates 1'."""
+
+    return "  ·  ".join(f"{nome} {pontos}" for nome, pontos in placar.items())
