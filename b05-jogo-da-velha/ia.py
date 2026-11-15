@@ -9,6 +9,7 @@ impossível: sempre a melhor jogada do minimax (com poda alfa-beta). Nunca
             perde.
 """
 
+import functools
 import math
 import random
 
@@ -19,6 +20,23 @@ DIFICULDADES = ["fácil", "médio", "difícil", "impossível"]
 # No difícil, a chance de o computador jogar ao acaso em vez da melhor
 # jogada. Com 25%, ele ainda joga bem, mas dá para vencer com atenção.
 CHANCE_DE_ERRO_DIFICIL = 0.25
+
+
+def contar_chamadas(funcao):
+    """Decorador que conta quantas vezes a função foi chamada.
+
+    A contagem fica em funcao.chamadas. Como o minimax chama a si mesmo
+    pelo nome, as chamadas recursivas também passam pelo decorador, e a
+    contagem é o número de tabuleiros visitados.
+    """
+
+    @functools.wraps(funcao)
+    def contadora(*args, **kwargs):
+        contadora.chamadas += 1
+        return funcao(*args, **kwargs)
+
+    contadora.chamadas = 0
+    return contadora
 
 
 def jogada_aleatoria(tab):
@@ -63,6 +81,7 @@ def pontuacao_final(tab, computador, profundidade):
     return profundidade - 10
 
 
+@contar_chamadas
 def minimax(tab, vez, computador, profundidade=0):
     """Devolve a nota do tabuleiro supondo que os dois jogam perfeitamente.
 
@@ -84,6 +103,7 @@ def minimax(tab, vez, computador, profundidade=0):
     return min(notas)
 
 
+@contar_chamadas
 def minimax_alfa_beta(tab, vez, computador, profundidade=0,
                       alfa=-math.inf, beta=math.inf):
     """Mesmo resultado do minimax, visitando bem menos tabuleiros.
@@ -119,6 +139,38 @@ def minimax_alfa_beta(tab, vez, computador, profundidade=0,
         if alfa >= beta:
             break  # o computador nunca deixaria o jogo chegar aqui
     return pior
+
+
+@contar_chamadas
+def minimax_memo(tab, vez, computador, profundidade=0, memoria=None):
+    """Mesmo resultado do minimax, guardando as notas já calculadas.
+
+    O mesmo tabuleiro aparece por vários caminhos: X no 1 e depois no 2
+    dá o mesmo tabuleiro que X no 2 e depois no 1. A memória é um
+    dicionário que guarda a nota de cada tabuleiro já resolvido, para não
+    explorar a mesma subárvore de novo.
+    """
+
+    if memoria is None:
+        memoria = {}
+
+    # A lista vira tupla porque chaves de dicionário não podem mudar.
+    chave = (tuple(tab), vez)
+    if chave in memoria:
+        return memoria[chave]
+
+    if vencedor(tab) is not None:
+        nota = pontuacao_final(tab, computador, profundidade)
+    else:
+        notas = []
+        for casa in jogadas_validas(tab):
+            novo = jogar(tab, casa, vez)
+            notas.append(minimax_memo(novo, outro(vez), computador,
+                                      profundidade + 1, memoria))
+        nota = max(notas) if vez == computador else min(notas)
+
+    memoria[chave] = nota
+    return nota
 
 
 def melhor_jogada(tab, computador):

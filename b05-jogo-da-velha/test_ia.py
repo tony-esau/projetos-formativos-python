@@ -95,3 +95,30 @@ def test_toda_dificuldade_joga_numa_casa_livre(dificuldade):
     tab = montar("XO.X.O...")
     for _ in range(20):
         assert escolher_jogada(tab, "O", dificuldade) in jogadas_validas(tab)
+
+
+@pytest.mark.parametrize("texto, vez", [
+    ("X........", "O"), ("X...O....", "X"), ("XO..X....", "O"),
+])
+def test_memoizacao_da_a_mesma_nota_que_o_minimax(texto, vez):
+    from ia import minimax_memo
+
+    tab = montar(texto)
+    assert minimax_memo(tab, vez, "O") == minimax(tab, vez, "O")
+
+
+def test_contagem_de_tabuleiros_visitados():
+    # Num tabuleiro com uma casa livre, o minimax visita 2 tabuleiros: o
+    # atual e o que fica depois da última jogada.
+    minimax.chamadas = 0
+    minimax(montar("XOXXOOOX."), "X", "X")
+    assert minimax.chamadas == 2
+
+
+def test_poda_visita_menos_tabuleiros():
+    tab = montar("X........")
+    minimax.chamadas = 0
+    minimax(tab, "O", "X")
+    minimax_alfa_beta.chamadas = 0
+    minimax_alfa_beta(tab, "O", "X")
+    assert minimax_alfa_beta.chamadas < minimax.chamadas
