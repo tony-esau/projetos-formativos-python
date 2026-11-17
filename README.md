@@ -21,8 +21,8 @@ Todos os projetos usam **apenas Python puro** (linguagem e biblioteca padrão). 
 | B02 | [Raio-X do disco](b02-raio-x-disco/) | Computador | `os.walk`, `stat`, `defaultdict`, histórico em JSON | ✅ Concluído |
 | B03 | [Agenda de contatos](b03-agenda-json/) | Arquivos | JSON, validação, backup de arquivo corrompido | ✅ Concluído |
 | B04 | [Controle de gastos](b04-controle-gastos/) | Arquivos | CSV, relatório mensal, orçamento por categoria | ✅ Concluído |
-| B05 | Jogo da velha | Jogos | recursão, minimax | 🔲 A fazer |
-| B06 | Sistema bancário | Orientação a objetos | herança, `@property`, exceções próprias | 🔲 A fazer |
+| B05 | [Jogo da velha](b05-jogo-da-velha/) | Jogos | recursão, minimax, poda alfa-beta | ✅ Concluído |
+| B06 | Sistema de RH para empresas | Orientação a objetos | herança, `@property`, exceções próprias | 🔲 A fazer |
 
 > Legenda: ✅ Concluído · ⏳ Em andamento · 🔲 A fazer
 
